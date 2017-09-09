@@ -1,0 +1,22 @@
+<table class="table table-condensed table-hover table-bordered table-center table-middle table_details">
+	<thead>
+		<tr class="success">
+			<th>异常出勤时间</th>
+			<th>异常类型</th>
+			<th>考勤类型</th>
+			<th>异常事由</th>
+			<th>创建时间</th>
+		</tr>
+	</thead>
+	<tbody>
+		{foreach $datas as $data}
+			<tr class="success">
+				<td>{$data['unusual_time']}</td>
+				<td>{$unusual_type[$data['unusual_type']]}</td>
+				<td>{$sign_type[$data['sign_type']]}</td>
+				<td style="width:300px;word-wrap:break-word;">{$data['describe']}</td>
+				<td>{$data['create_time']}</td>
+			</tr>
+		{/foreach}
+	</tbody>
+</table>

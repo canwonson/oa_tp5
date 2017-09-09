@@ -1,0 +1,64 @@
+{extend name="layout/main" /}
+{block name="ext_css"}
+{/block}
+{block name="content"}
+    <div class="row">
+        <div class="col-md-12">
+            <div class="box box-default">
+                <div class="box-header with-border">
+                    <h3 class="box-title">[{$project|get_project_name}]预算调整|职能列表</h5>
+                </div>
+                <div class="box-body">
+                    <div class="row">
+                        <div class="col-md-12">
+                        	<form method="post" id="form">
+                        		<input type="hidden" name="project_id" value="{$project}">
+	                            <table data-toggle="table">
+	                                <thead>
+	                                    <tr>
+	                                        <th>ID</th>
+	                                        <th>职能名称</th>
+	                                        <th>职能人数</th>
+	                                        <th>职能预算(元)</th>
+	                                    </tr>
+	                                </thead>
+	                                <tbody>
+	                                    {foreach $datas as $row}
+	                                        <tr>
+	                                            <td>{$row['id']}</td>
+	                                            <td>{$row['name']}</td>
+	                                            <td>{$row['user_count']}</td>
+	                                            <td><input type="text" name="duty[{$row['id']}]" value="{$row['budget']|default=0}"></td>
+	                                        </tr>
+	                                    {/foreach}
+	                                </tbody>
+	                            </table>
+                            </form>
+                            <br/>
+                            <div class="box-footer">
+								<div class="">
+									<a onclick="save()" class="btn btn-success btn-flat">
+										<i class="fa fa-check"></i>
+										保存
+									</a>
+									<a href="javascript:history.back(-1);" class="btn btn-default btn-flat btn_submit" style="float:right">
+										<i class="fa fa-arrow-left"></i>
+										返 回
+									</a>
+								</div>
+							</div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+{/block}
+{block name="ext_js"}
+  <script>
+    function save() {
+     	sendForm("form", "{:url('/project/budgetSave')}", 1);
+      	return false;
+    }
+  </script>
+{/block}

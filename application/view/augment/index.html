@@ -1,0 +1,59 @@
+{extend name="layout/main" /}
+{block name="ext_css"}
+{/block}
+{block name="content"}
+  <div class="row">
+    <div class="col-md-12">
+      <div class="box box-default">
+        <div class="box-header with-border">
+          <h3 class="box-title">增员申请</h5>
+        </div>
+        <div class="box-body">
+          <div class="row">
+            <div class="col-md-12">
+              <div class="operate panel panel-default">
+                <div class="panel-body">
+                  {include file="layout/search" fields='user,project,duty,time'/}
+                </div>
+              </div>
+              <table data-toggle="table">
+                <thead>
+                  <tr>
+                    <th>申请人</th>
+                    <th>申请部门(职能)</th>
+                    <th>拟增员人数</th>
+                    <th>目前人数</th>
+                    <th>期望到岗时间</th>
+                    <th>薪资范围</th>
+                    <th>编制情况</th>
+                    <th>创建时间</th>
+                    <th>操作</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {foreach $datas as $data}
+                    <tr>
+                      <td>{$data['user_id']|get_user_name}</td>
+                      <td>{$data['project_id']|get_project_name}({$data['duty_id']|get_duty_name})</td>
+                      <td>{$data['apply_number']}</td>
+                      <td>{$data['now_number']}</td>
+                      <td>{$data['reach_time']}</td>
+                      <td>{$data['min_pay']} -- {$data['max_pay']}</td>
+                      <td>{$auth_type[$data['auth_type']]}</td>
+                      <td>{$data['create_time']}</td>
+                      <td><a href="details?id={$data['flow_id']}" class="btn_details">查看详情</a></td>
+                    </tr>
+                  {/foreach}
+                </tbody>
+              </table>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+  {$paginate}
+{/block}
+{block name="ext_js"}
+{/block}
+

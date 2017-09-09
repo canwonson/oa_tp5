@@ -1,0 +1,87 @@
+{extend name="layout/main" /}
+{block name="ext_css"}
+{/block}
+{block name="content"}
+    <div class="row">
+        <div class="col-md-12">
+            <div class="box box-default">
+                <div class="box-header with-border">
+                    <h3 class="box-title">公告消息</h5>
+                </div>
+                <div class="box-body">
+                    <div class="row">
+                        <div class="col-md-12">
+                            <div class="operate panel panel-default">
+                                <div class="panel-body">
+                                    {include file="layout/search" fields='user,time'/}
+                                    <div class="pull-right">
+                                    {eq name="manager" value="true"}
+                                        <a class="btn btn-danger ml10" href="{:url('edit')}"><span class="glyphicon glyphicon-plus"></span> 新增公告</a>
+                                    {/eq}
+                            </div>
+                                </div>
+                            </div>
+                            <table data-toggle="table">
+                                <thead>
+                                    <tr>
+                                        <th>标题</th>
+                                        <th>发布人</th>
+                                        <th>发布时间</th>
+                                        {eq name="manager" value="true"}
+                                        <th>状态[草稿/已发布]</th>
+                                        <th>发送email次数</th>
+                                        {/eq}
+                                        <th>操作</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    {foreach $datas as $data}
+                                        <tr>
+                                            <td><a href="{:url('read', ['id'=>$data.id])}">{$data['title']}</a></td>
+                                            <td>{$data['user_id']|get_user_name}</td>
+                                            <td>{$data['create_time']}</td>
+                                            {eq name="manager" value="true"}
+                                            <td>
+                                                <div class="checkbox-slider--b-flat center">
+                                                    <label>
+                                                    <input type="checkbox" onchange="switcher({$data['id']}, 'status', {$data['status'] ? 0 : 1})" {eq name="data['status']" value="1"}checked="checked"{/eq} ><span></span>
+                                                    </label>
+                                                </div>
+                                            </td>
+                                            <td>{$data['send_count']}</td>
+                                            {/eq}
+                                            <td>
+                                                <a class="btn btn-primary btn-xs" href="{:url('read', ['id'=>$data.id])}">查看</a>
+                                                {eq name="manager" value="true"}| 
+                                                <a class="btn btn-success btn-xs" href="{:url('edit', ['id'=>$data.id])}">编辑</a> |
+                                                <a class="btn btn-warning btn-xs" href="{:url('send', ['id'=>$data.id])}">发送email</a>|
+                                                <button class="btn btn-danger btn-xs" onclick="del({$data['id']})">删除</button>
+                                                {/eq}
+                                            </td>
+                                        </tr>
+                                    {/foreach}
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+{/block}
+{block name="ext_js"}
+{eq name="manager" value="true"}
+<script>
+    function switcher(id, name, value) {
+        _switcher(id, name, value, "{:url('/notice/switcher')}");
+    }
+
+    function del(id) {
+        var msg = '确定要删除?';
+        var parame = {id:id};
+        var url = "{:url('/notice/del')}";
+        ui_confirm(msg, url, parame);
+    }
+</script>
+{/eq}
+{/block}

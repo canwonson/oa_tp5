@@ -1,0 +1,25 @@
+<div class="box-footer">
+	{if condition="($mode == 'add') OR ($mode == 'edit') "}
+	<div class="form-group">
+		<div class="">
+			<a onclick="submit()" class="btn btn-success btn-flat">
+				<i class="fa fa-check"></i>
+				提交
+			</a>
+			<a href="javascript:history.back(-1);" class="btn btn-default btn-flat btn_submit" style="float:right">
+				<i class="fa fa-arrow-left"></i>
+				返 回
+			</a>
+		</div>
+	</div>
+	{elseif condition="($mode == 'read')"/}
+	<div class="form-group">
+		<div class="">
+			<a href="javascript:history.back(-1);" class="btn btn-default btn-flat" style="float:right">
+				<i class="fa fa-arrow-left"></i>
+				返 回
+			</a>
+		</div>
+	</div>
+	{/if}
+</div>

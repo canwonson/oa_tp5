@@ -1,0 +1,24 @@
+<div class="form-group">
+	<label class="control-label">异常出勤时间*</label>
+	<input type="text" class="form-control date-picker" name="unusual_time" placeholder="异常出勤时间" data-date-format="yyyy-mm-dd hh:ii" value="{$data['unusual_time']}" {notin name="mode" value="add,edit"}readonly{/notin}>
+</div>
+<div class="form-group">
+	<label class="control-label">异常类型*</label>
+	<select name="unusual_type" id="unusual_type" class="form-control" {notin name="mode" value="add,edit"}readonly{/notin}>
+		{foreach $config['param']['unusual_type'] as $type => $name}
+			<option value="{$type}" {eq name="$type" value="$data['unusual_type']"}selected="selected"{/eq}>{$name}</option>
+		{/foreach}
+	</select>
+</div>
+<div class="form-group">
+	<label class="control-label">签到情况*</label>
+	<select name="sign_type" id="sign_type" class="form-control" {notin name="mode" value="add,edit"}readonly{/notin}>
+		{foreach $config['param']['sign_type'] as $type => $name}
+			<option value="{$type}" {eq name="$type" value="$data['sign_type']"}selected="selected"{/eq}>{$name}</option>
+		{/foreach}
+	</select>
+</div>
+<div class="form-group">
+	<label class="control-label">异常事由*</label>
+	<textarea class="form-control" name="describe" rows="5" {notin name="mode" value="add,edit"}readonly{/notin}>{$data['describe']}</textarea>
+</div>

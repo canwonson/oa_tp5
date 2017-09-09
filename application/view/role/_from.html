@@ -1,0 +1,17 @@
+<div class="form-group">
+  <label for="">角色名称</label>
+  <input class="form-control" type="text" name="name" value="{$data['name']}">
+</div>
+<div class="form-group">
+  <label for="">描述</label>
+  <input class="form-control" type="text" name="description" value="{$data['description']}">
+</div>
+<div class="form-group">
+  <label for="">状态</label>
+  <div class="input-group">
+    <input name="status" id="status" value="1" type="radio" {eq name="data['status']" value="1"}checked="checked"{/eq}>
+    <label for="status">启用</label>
+    <input name="status" id="status" value="0" type="radio" {eq name="data['status']" value="0"}checked="checked"{/eq}>
+    <label for="status">停用</label>
+  </div>
+</div>

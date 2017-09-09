@@ -1,0 +1,67 @@
+{extend name="layout/main" /}
+{block name="ext_css"}
+{/block}
+{block name="content"}
+    <div class="row">
+        <div class="col-md-12">
+            <div class="box box-default">
+                <div class="box-header with-border">
+                    <h3 class="box-title">年假列表</h5>
+                </div>
+                <div class="box-body">
+                    <div class="row">
+                        <div class="col-md-12">
+                            <div class="operate panel panel-default">
+                                <div class="panel-body">
+                                    {include file="layout/search" fields='user,date'/}
+                                </div>
+                            </div>
+                            <table data-toggle="table">
+                                <thead>
+                                    <tr>
+                                        <th>用户ID</th>
+                                        <th>用户名称</th>
+                                        <th>入职时间</th>
+                                        <th>总年假数</th>
+                                        <th>已用年假</th>
+                                        <th>剩余年假</th>
+                                        <th>操作</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    {foreach $datas as $data}
+                                        <tr>
+                                        	<td>{$data.user_id}</td>
+                                        	<td>{$data.name}</td>
+                                        	<td>{$data.entry_time}</td>
+                                        	<td>{$data.info.total_day}</td>
+                                        	<td>{$data.info.used_day}</td>
+                                        	<td>{$data.info.residue_day}</td>
+                                        	<td>
+                                        		<a class="btn btn-danger btn-xs" href="{:url('/annual/details', ['user_id'=>$data.user_id])}">详情/调整</a>
+                                        	</td>
+                                        </tr>
+                                    {/foreach}
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+{/block}
+{block name="ext_js"}
+    <script>
+        function switcher(id, name, value) {
+            _switcher(id, name, value, "{:url('/position/switcher')}");
+        }
+
+        function del(id) {
+            var msg = '确定要删除?';
+            var parame = {id:id};
+            var url = "{:url('/position/destroy')}";
+            ui_confirm(msg, url, parame);
+        }
+    </script>
+{/block}

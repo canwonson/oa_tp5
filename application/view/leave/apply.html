@@ -1,0 +1,114 @@
+{extend name="layout/main" /}
+{block name="ext_css"}
+{/block}
+{block name="content"}
+	<div class="row">
+		<div class="col-sm-6">
+			<div class="box box-solid">
+				<div class="box-header with-border">
+					<i class="fa fa-edit"></i>
+					<h3 class="box-title"> {$config.name}</h3>
+				</div>
+				<div class="box-body">
+					<div class="row">
+						<div class="col-sm-12">
+							<form id="apply_form" role="form">
+								<div class="form-group">
+									<label class="control-label">流程标题</label>
+									<input type="text" name="title" class="form-control" value="{$data['title']}" placeholder="输入标题" readonly/>
+								</div>
+								{include file="/leave/_form" /}
+								<div class="form-group">
+									<label class="control-label">流程走向</label>
+									<div id="form_confirm">{$confirm}</div>
+								</div>
+								{if condition="($mode == 'add') OR ($mode == 'edit') "}
+								<div class="form-group">
+									<input type="hidden" name="mode" value="{$mode}">
+									{eq name="mode" value="edit"}
+									<input type="hidden" name="id" value="{$data['id']}">
+									{/eq}
+								</div>
+								{/if}
+							</form>
+							{include file="/index/file" /}
+							{include file="/flow/apply_footer" /}
+						</div>
+					</div>
+				</div>
+			</div>
+		</div>
+		{include file="/flow/apply_log" /}
+	</div>
+	{include file="/flow/apply_confirm" /}
+{/block}
+{block name="ext_js"}
+{include file="/flow/apply_js" /}
+<script>
+	function check_from()
+	{
+		var result = check_day();
+		return result;
+	}
+
+  	function update_confirm()
+  	{
+    	var obj_form = $('#apply_form');
+   	 	var leave_day = parseInt(obj_form.find('input[name="leave_day"]').val());
+    	leave_day = isNaN(leave_day) ? 0 : leave_day;
+    	var data = {leave_day:leave_day};
+    	$.get("{:url('/leave/updateConfirm')}", data, function(html){
+  			$('#form_confirm').html(html);
+    	});
+  	}
+
+  	function check_day() {
+    	var leave_day = $('input[name="leave_day"]').val();
+    	var reg = /^\d*\.?[5,0]?$/i;
+   	 	var result = false;
+    	result = reg.test(leave_day);
+   		if (!result) {
+        	alert('大于3.5小时为请假1天，小于3.5小时为请假0.5天,请填写"1.5,0.5,2"数目.');
+    	}
+    	return result;
+	}
+
+  	function type_select(value)
+  	{
+  		ext_hide();
+  		switch(value)
+	  	{
+		  	case '2':
+		  		var msg = '病假申请需要提交相关附件!\n病假工资的计算：①每个自然月内五天以内（含五天）的病假，每天基本工资为 ：日工资*50%；③每个自然月内病假超过五天，第六天病假起，每天基本工资为：日工资*20%；如扣除后月工资低于广州市最低工资标准的80%的，则按其最低工资标准的80%支付。';
+				  alert(msg);
+				break;
+			case '3':
+		  		$.get("{:url('/leave/getAnnual')}", {}, function(html){
+				  	$('.annual_ext').fadeIn();
+		        	$('.annual_ext').html(html);
+		        	$('.annual_ext').attr('disabled', false);
+		      	});
+				break;
+			case '4':
+			  	$.get("{:url('/leave/getOvertime')}", {}, function(html){
+				  	$('.overtime_ext').fadeIn();
+		        	$('.overtime_ext').html(html);
+		        	$('.overtime_ext').attr('disabled', false);
+		      	});
+				break;
+			case '7':
+			  	$('.other_type').fadeIn();
+		        $('.other_type').attr('disabled', false);
+				break;
+			default :
+				break;
+	  	}
+  	}
+
+  	function ext_hide()
+  	{
+  		$('.ext_form').hide();
+  		$('.overtime_ext').attr('disabled', true);
+  	}
+</script>
+{/block}

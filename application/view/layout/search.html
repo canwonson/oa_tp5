@@ -1,0 +1,80 @@
+{php}
+	$fields = explode(',', '[fields]');
+{/php}
+<form class="form-inline" method="post">
+	{foreach $fields as $field}
+		{switch name="field"}
+			{case value="user"}
+				<div class="form-group">
+					<label for="user">员工</label>
+					<input type="text" class="form-control" placeholder="账号/中文/id" name="user" value="{present name="param['user']"}{$param['user']}{/present}">
+				</div>
+			{/case}
+			{case value="project"}
+				<div class="form-group">
+					<label for="project_id">项目</label>
+					<select name="project_id" id="project_id" class="form-control">
+						<option value="">-所有-</option>
+						{foreach $conf_list['project_list'] as $id => $conf}
+							<option value="{$id}" {present name="param['project_id']"}{eq name="$id" value="$param['project_id']"}selected="selected"{/eq}{/present}>{$conf}</option>
+						{/foreach}
+				</select>
+				</div>
+			{/case}
+			{case value="duty"}
+				<div class="form-group">
+					<label for="duty_id">职能</label>
+					<select name="duty_id" id="duty_id" class="form-control">
+						<option value="">-所有-</option>
+						{foreach $conf_list['duty_list'] as $id => $conf}
+							<option value="{$id}" {present name="param['duty_id']"}{eq name="$id" value="$param['duty_id']"}selected="selected"{/eq}{/present}>{$conf}</option>
+						{/foreach}}
+					</select>
+				</div>
+			{/case}
+			{case value="position"}
+				<div class="form-group">
+					<label for="position_id">职位</label>
+					<select name="position_id" id="position_id" class="form-control">
+						<option value="">-所有-</option>
+						{foreach $conf_list['position_list'] as $id => $conf}
+							<option value="{$id}" {present name="param['position_id']"}{eq name="$id" value="$param['position_id']"}selected="selected"{/eq}{/present}>{$conf}</option>
+						{/foreach}}
+					</select>
+				</div>
+			{/case}
+			{case value="role"}
+				<div class="form-group">
+					<label for="role_id">角色</label>
+					<select name="role_id" id="role_id" class="form-control">
+						<option value="">-所有-</option>
+						{foreach $conf_list['role_list'] as $id => $conf}
+							<option value="{$id}" {present name="param['role_id']"}{eq name="$id" value="$param['role_id']"}selected="selected"{/eq}{/present}>{$conf}</option>
+						{/foreach}}
+					</select>
+				</div>
+			{/case}
+			{case value="time"}
+				<div class="form-group">
+					<label class="control-label">开始时间*</label>
+					<input type="text" class="form-control date-picker" name="start_time" placeholder="开始时间" data-date-format="yyyy-mm-dd hh:ii" value="{present name="param['start_time']"}{$param['start_time']}{/present}">
+				</div>
+				<div class="form-group">
+					<label class="control-label">结束时间*</label>
+					<input type="text" class="form-control date-picker" name="end_time" placeholder="结束时间" data-date-format="yyyy-mm-dd hh:ii" value="{present name="param['end_time']"}{$param['end_time']}{/present}"">
+				</div>
+			{/case}
+			{case value="date"}
+				<div class="form-group">
+					<label class="control-label">开始日期*</label>
+					<input type="text" class="form-control date-picker" name="start_time" placeholder="开始时间" data-date-format="yyyy-mm-dd" value="{present name="param['start_time']"}{$param['start_time']}{/present}">
+				</div>
+				<div class="form-group">
+					<label class="control-label">结束日期*</label>
+					<input type="text" class="form-control date-picker" name="end_time" placeholder="结束时间" data-date-format="yyyy-mm-dd" value="{present name="param['end_time']"}{$param['end_time']}{/present}"">
+				</div>
+			{/case}
+		{/switch}
+	{/foreach}
+	<button type="submit" class="btn btn-default"> 搜索</button>
+</form>

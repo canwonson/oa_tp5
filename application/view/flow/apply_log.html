@@ -1,0 +1,28 @@
+{eq name="show.log" value="1"}
+<div class="col-sm-6">
+	<div class="box box-solid">
+		<div class="box-header with-border">
+			<i class="fa fa-eye"></i>
+			<h3 class="box-title"> 审核日志</h3>
+		</div>
+		<div class="box-body">
+			{foreach $flow_log as $row}
+				<div class="panel {eq name="row.result" value="1"}panel-success{/eq} {eq name="row.result" value="0"}panel-danger{/eq} {eq name="row.result" value="3"}panel-warning{/eq} {eq name="row.result" value="4"}panel-primary{/eq}">
+				  <div class="panel-heading">{$row['user_id']|get_user_name}||{$row['update_time']|date="Y-m-d H:i:s", ###}</div>
+				  <div class="panel-body">
+				  	{foreach $row['comment'] as $num => $comment}
+				  		{present name="comment_conf[$row['step']]"}
+							{eq name="comment_conf[$row['step']][$num]['show']" value="1"}
+								<h4>{$comment_conf[$row['step']][$num]['comment']}:</h4>
+								<p>{$comment}</p>
+								<hr/>
+							{/eq}
+				  		{/present}
+				  	{/foreach}
+				  </div>
+				</div>
+			{/foreach}
+		</div>
+	</div>
+</div>
+{/eq}

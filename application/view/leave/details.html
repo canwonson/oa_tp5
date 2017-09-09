@@ -1,0 +1,24 @@
+<table class="table table-condensed table-hover table-bordered table-center table-middle table_details">
+	<thead>
+		<tr class="success">
+			<th>开始时间</th>
+			<th>结束时间</th>
+			<th>请假天数</th>
+			<th>请假事由</th>
+			<th>请假类型</th>
+			<th>创建时间</th>
+		</tr>
+	</thead>
+	<tbody>
+		{foreach $datas as $data}
+			<tr class="success">
+				<td>{$data['start_time']}</td>
+				<td>{$data['end_time']}</td>
+				<td>{$data['leave_day']}</td>
+				<td style="width:300px;word-wrap:break-word;">{$data['describe']}</td>
+				<td>{$leave_type[$data['leave_type']]}</td>
+				<td>{$data['create_time']}</td>
+			</tr>
+		{/foreach}
+	</tbody>
+</table>

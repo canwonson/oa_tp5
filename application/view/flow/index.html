@@ -1,0 +1,30 @@
+{extend name="layout/main" /}
+{block name="content"}
+  <div class="box box-solid">
+    <div class="box-header with-border">
+      <i class="fa fa-edit"></i>
+      <h3 class="box-title"> 申请类型</h3>
+    </div>
+    <div class="box-body">
+			{foreach name="tag_list" key="id" item="tag"}
+				<div class="panel panel-success">
+					<div class="panel-heading">
+						{$tag.name}
+					</div>
+					<div class="panel-body">
+						<div class="ibox float-e-margins" gid="{$id}">
+		          <div class="ibox-content clearfix">
+		            {foreach name="tag.list" item="tag"}
+		              <div class="col-sm-2 col-xs-6 text-center">
+										{php}$url = "/".$tag['controller']."/apply"{/php}
+		                <a class="btn btn-info btn-block" href="{:url($url)}">{$tag.name}</a>
+		                <div class="space-8"></div>
+		              </div>
+		            {/foreach}
+		          </div>
+		        </div>
+					</div>
+				</div>
+      {/foreach}
+    </div>
+{/block}

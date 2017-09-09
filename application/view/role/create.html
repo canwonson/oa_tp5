@@ -1,0 +1,62 @@
+{extend name="layout/main" /}
+{block name="ext_css"}
+  {load href="/static/plugins/select2/select2.min.css" /}
+  {load href="/static/AdminLTE-2.3.6/plugins/iCheck/square/blue.css"}
+{/block}
+{block name="content"}
+  <div class="row">
+    <div class="col-md-12">
+      <div class="box box-default">
+        <div class="box-header with-border">
+          <h3 class="box-title">角色配置</h5>
+        </div>
+        <div class="box-body">
+          <div class="row">
+            <div class="col-md-12">
+              <div class="box-body">
+                <form method="post" id="form_create">
+                  <div class="box-body">
+                    {include file="role/_from" /}
+                    <div class="form-group">
+                        <input type="hidden" name="mode" value="add">
+                    </div>
+                  </div>
+                  <div class="box-footer clearfix">
+                    <a href="javascript:history.back(-1);" class="btn btn-default btn-flat">
+                        <i class="fa fa-arrow-left"></i>
+                        返 回
+                    </a>
+                    <a onclick="save()" class="btn btn-success btn-flat">
+                        <i class="fa fa-plus"></i>
+                        新 增
+                    </a>
+                  </div>
+                </form>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+{/block}
+{block name="ext_js"}
+  {load href="/static/AdminLTE-2.3.6/plugins/iCheck/icheck.min.js"}
+  {load href="/static/plugins/select2/select2.min.js"}
+  <script>
+    $(function () {
+      $(".module_select").select2();
+      //iCheck
+      $("input").iCheck({
+        checkboxClass: "icheckbox_square-blue",
+        radioClass: "iradio_square-blue",
+        increaseArea: "20%" // optional
+      });
+    });
+
+    function save() {
+      sendForm("form_create", "{:url('/role/save')}", 0, 1);
+      return false;
+    }
+  </script>
+{/block}

@@ -1,0 +1,55 @@
+<!DOCTYPE html>
+<html lang="zh">
+<head>
+  <meta charset="utf-8">
+  <meta http-equiv="X-UA-Compatible" content="IE=edge">
+  <meta name="renderer" content="webkit">
+  <title>OA</title>
+  <meta content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no" name="viewport">
+  {load href="/public/static/AdminLTE-2.3.6/bootstrap/css/bootstrap.min.css" /}
+  {load href="https://cdn.bootcss.com/font-awesome/4.7.0/css/font-awesome.min.css" /}
+  {load href="https://cdn.bootcss.com/ionicons/2.0.1/css/ionicons.min.css" /}
+  {load href="/public/static/AdminLTE-2.3.6/dist/css/AdminLTE.min.css" /}
+  {load href="/public/static/AdminLTE-2.3.6/dist/css/skins/_all-skins.min.css" /}
+  {load href="/public/static/AdminLTE-2.3.6/plugins/bootstrap-wysihtml5/bootstrap3-wysihtml5.min.css" /}
+  {load href="/public/static/css/style.css" /}
+  {load href="/public/static/plugins/toastr/build/toastr.css" /}
+  {load href="/public/static/plugins/pace/themes/pace-theme-minimal.css" /}
+  {include file="layout/plugin_css"}
+  {block name="ext_css"}{/block}
+</head>
+<body class="hold-transition skin-black-light sidebar-mini">
+  <div class="wrapper">
+    {neq name="view" value="weixin"}
+      {include file="layout/header" /}
+      {include file="layout/sidebar" /}
+    {/neq}
+    <!-- Content Wrapper. Contains page content -->
+    <div class="content-wrapper">
+      <section class="content">
+        <div class="row">
+          <div class="col-xs-12">
+            {block name="content"}
+              content
+            {/block}
+          </div>
+        </div>
+      </section>
+    </div>
+  </div>
+  {load href="/public/static/AdminLTE-2.3.6/plugins/jQuery/jquery-2.2.3.min.js"}
+  {load href="/public/static/AdminLTE-2.3.6/plugins/jQueryUI/jquery-ui.min.js"}
+  {load href="/public/static/AdminLTE-2.3.6/bootstrap/js/bootstrap.min.js"}
+  {load href="/public/static/AdminLTE-2.3.6/plugins/slimScroll/jquery.slimscroll.min.js"}
+  {load href="/public/static/AdminLTE-2.3.6/dist/js/app.min.js"}
+  {load href="/public/static/AdminLTE-2.3.6/plugins/bootstrap-wysihtml5/bootstrap3-wysihtml5.all.min.js"}
+  {load href="/public/static/js/common.js"}
+  {load href="/public/static/plugins/toastr/toastr.js"}
+  {load href="/public/static/plugins/pace/pace.min.js"}
+  {include file="layout/plugin_js"}
+  <script>
+    $.widget.bridge('uibutton', $.ui.button);
+  </script>
+  {block name="ext_js"}{/block}
+</body>
+</html>

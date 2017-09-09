@@ -1,0 +1,83 @@
+{extend name="layout/main" /}
+{block name="ext_css"}
+{/block}
+{block name="content"}
+  	<div class="row">
+   		<div class="col-md-12">
+      		<div class="box box-default">
+        		<div class="box-header with-border">
+          			<h3 class="box-title">项目列表</h5>
+        		</div>
+        		<div class="box-body">
+          			<div class="row">
+            			<div class="col-md-12">
+              				<div class="operate panel panel-default">
+                				<div class="panel-body">
+                  					<div class="pull-right">
+                    					<a href="{:url('/project/edit')}" class="btn btn-sm btn-primary">新增</a>
+                 					</div>
+                				</div>
+              				</div>
+              				<table data-toggle="table">
+                				<thead>
+                  					<tr>
+					                    <th>ID</th>
+					                    <th>项目名称</th>
+										<th>状态</th>
+										<th>负责人</th>
+                    <th>部门人数</th>
+                    <th>部门预算</th>
+                    <th>目前预算</th>
+					                    <th>创建时间</th>
+					                    <th>更新时间</th>
+					                    <th>操作</th>
+                  					</tr>
+                				</thead>
+                				<tbody>
+                					{foreach $datas as $row}
+										<tr>
+											<td>{$row['id']}</td>
+											<td>{$row['name']}</td>
+											<td>
+												<div class="checkbox-slider--b-flat center">
+	                            					<label>
+	                              						<input type="checkbox" onchange="switcher({$row['id']}, 'status', {$row['status'] ? 0 : 1})" {eq name="row['status']" value="1"}checked="checked"{/eq} ><span></span>
+	                            					</label>
+	                          					</div>
+                          					</td>
+											<td>{$row['leader_id']|get_user_name}</td>
+                      <td>{$row['user_count']}</td>
+                      <td>{$row['budget']}</td>
+                      <td>{$row['cur_budget']}</td>
+											<td>{$row['create_time']}</td>
+											<td>{$row['update_time']}</td>
+											<td>
+												<a class="btn btn-primary btn-xs" href="{:url('/project/edit', ['id'=>$row.id])}">编辑</a> |
+                        <a class="btn btn-success btn-xs" href="{:url('/project/budget', ['id'=>$row.id])}">目前预算</a> |
+                        <button class="btn btn-danger btn-xs" onclick="del({$row['id']})">删除</button>
+											</td>
+										</tr>
+									{/foreach}
+                				</tbody>
+              				</table>
+            			</div>
+          			</div>
+        		</div>
+      		</div>
+    	</div>
+  	</div>
+{/block}
+{block name="ext_js"}
+  	<script>
+	    function switcher(id, name, value) {
+	      	_switcher(id, name, value, "{:url('/project/switcher')}");
+	    }
+
+	    function del(id) {
+	        var msg = '确定要删除?';
+	        var parame = {id:id};
+	        var url = "{:url('/project/destroy')}";
+	        ui_confirm(msg, url, parame);
+	    }
+  	</script>
+{/block}

@@ -1,0 +1,90 @@
+{extend name="layout/main" /}
+{block name="ext_css"}
+{/block}
+{block name="content"}
+  <div class="row">
+    <div class="col-md-12">
+      <div class="box box-default">
+        <div class="box-header with-border">
+          <h3 class="box-title">用户列表</h5>
+        </div>
+        <div class="box-body">
+          <div class="row">
+            <div class="col-md-12">
+              <div class="operate panel panel-default">
+                <div class="panel-body">
+                  {include file="layout/search" fields='user,project,duty,position,role'/}
+                  <div class="pull-right">
+                    <a href="{:url('/user/edit')}" class="btn btn-sm btn-primary">新增</a>
+                  </div>
+                </div>
+              </div>
+              <table data-toggle="table">
+                <thead>
+                  <tr>
+                    <th>ID</th>
+                    <th>用户</th>
+					<th>账号</th>
+                    <th>部门</th>
+                    <th>职能</th>
+                    <th>职位</th>
+                    <th>角色</th>
+                    <th>状态</th>
+                    <th>操作</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {foreach $datas as $data}
+                    <tr>
+                      	<td>{$data['id']}</td>
+                        <td>{$data['name']}</td>
+						<td>{$data['account']}</td>
+                        <td>{$data['project_id']|get_project_name}</td>
+                        <td>{$data['duty_id']|get_duty_name}</td>
+                        <td>{$data['position_id']|get_position_name}</td>
+                        <td>{$data['role_id']|get_role_name}</td>
+                        <td>
+                          <div class="checkbox-slider--b-flat center">
+                            <label>
+                              <input type="checkbox" onchange="switcher({$data['id']}, 'status', {$data['status'] ? 0 : 1})" {eq name="data['status']" value="1"}checked="checked"{/eq} ><span></span>
+                            </label>
+                          </div>
+                        </td>
+                        <td>
+                          <a class="btn btn-primary btn-xs" href="{:url('/user/edit', ['id'=>$data.id])}">编辑</a> |
+                          <button class="btn btn-danger btn-xs" onclick="del({$data['id']})">删除</button> |
+                          <button class="btn btn-success btn-xs" onclick="reset({$data['id']})">重置密码</button>
+                        </td>
+                    </tr>
+                  {/foreach}
+                </tbody>
+              </table>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+{/block}
+{block name="ext_js"}
+
+  <script>
+    function switcher(id, name, value) {
+      _switcher(id, name, value, "{:url('/user/switcher')}");
+    }
+
+    function del(id) {
+        var msg = '确定要删除?';
+        var parame = {id:id};
+        var url = "{:url('/user/del')}";
+        ui_confirm(msg, url, parame);
+    }
+
+    function reset(id) {
+        var msg = '确定要重置密码?';
+        var parame = {id:id};
+        var url = "{:url('/user/reset')}";
+        ui_confirm(msg, url, parame);
+    }
+  </script>
+{/block}

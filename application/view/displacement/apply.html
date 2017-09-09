@@ -1,0 +1,58 @@
+{extend name="layout/main" /}
+{block name="ext_css"}
+{/block}
+{block name="content"}
+	<div class="row">
+		<div class="col-sm-6">
+			<div class="box box-solid">
+				<div class="box-header with-border">
+					<i class="fa fa-edit"></i>
+					<h3 class="box-title"> {$config.name}</h3>
+				</div>
+				<div class="box-body">
+					<div class="row">
+						<div class="col-sm-12">
+							<form id="apply_form" role="form">
+								<div class="form-group">
+									<label class="control-label">流程标题</label>
+									<input type="text" name="title" class="form-control" value="{$data['title']}" placeholder="输入标题" readonly/>
+								</div>
+								{include file="/displacement/_form" /}
+								<div class="form-group">
+									<label class="control-label">流程走向</label>
+									<div id="form_confirm">{$confirm}</div>
+								</div>
+								{if condition="($mode == 'add') OR ($mode == 'edit') "}
+								<div class="form-group">
+									<input type="hidden" name="mode" value="{$mode}">
+									{eq name="mode" value="edit"}
+									<input type="hidden" name="id" value="{$data['id']}">
+									{/eq}
+								</div>
+								{/if}
+							</form>
+							{include file="/flow/apply_footer" /}
+						</div>
+					</div>
+				</div>
+			</div>
+		</div>
+		{include file="/flow/apply_log" /}
+	</div>
+	{include file="/flow/apply_confirm" /}
+{/block}
+{block name="ext_js"}
+{include file="/flow/apply_js" /}
+<script>
+	function update_confirm()
+  	{
+	    var obj_form = $('#apply_form');
+	    var original_project_id = parseInt(obj_form.find('select[id="original_project_id"]').find('option:selected').val());
+	    original_project_id = isNaN(original_project_id) ? 0 : original_project_id;
+	    var data = {original_project_id:original_project_id};
+	    $.get("{:url('/displacement/updateConfirm')}", data, function(html){
+	  		$('#form_confirm').html(html);
+	    });
+  	}
+</script>
+{/block}

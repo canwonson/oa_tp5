@@ -1,0 +1,110 @@
+{extend name="layout/main" /}
+{block name="ext_css"}
+{/block}
+{block name="content"}
+	<div class="row">
+		<div class="col-sm-6">
+			<div class="box box-solid">
+				<div class="box-header with-border">
+					<i class="fa fa-edit"></i>
+					<h3 class="box-title"> {$config.name}</h3>
+				</div>
+				<div class="box-body">
+					<div class="row">
+						<div class="col-sm-12">
+							<form id="apply_form" role="form">
+								<div class="form-group">
+									<label class="control-label">流程标题</label>
+									<input type="text" name="title" class="form-control" value="{$data['title']}" placeholder="输入标题" readonly/>
+								</div>
+								{include file="/augment/_form" /}
+								<div class="form-group">
+									<label class="control-label">流程走向</label>
+									<div id="form_confirm">{$confirm}</div>
+								</div>
+								{if condition="($mode == 'add') OR ($mode == 'edit') "}
+								<div class="form-group">
+									<input type="hidden" name="mode" value="{$mode}">
+									{eq name="mode" value="edit"}
+									<input type="hidden" name="id" value="{$data['id']}">
+									{/eq}
+								</div>
+								{/if}
+							</form>
+							{include file="/flow/apply_footer" /}
+						</div>
+					</div>
+				</div>
+			</div>
+		</div>
+		{include file="/flow/apply_log" /}
+	</div>
+	{include file="/flow/apply_confirm" /}
+{/block}
+{block name="ext_js"}
+{include file="/flow/apply_js" /}
+<script>
+{if condition="($mode == 'add') OR ($mode == 'edit') "}
+	function check_from()
+	{
+		var auth_type = $('select[name="auth_type"]').val();
+		if (auth_type == 1 || auth_type == 2) {
+			var data = {};
+			var project_id = $('select[name="project_id"]').val();
+			var max_pay = $('input[name="max_pay"]').val();
+			data = {project_id:project_id};
+			$.get("{:url('/augment/getBudget')}", data, function(budget){
+	  			if (max_pay > budget) {
+	  				msg = '最高薪资超出此部门剩余预算'+budget+',点击确认继续!';
+	  				swal({
+					    title: msg,
+					    type: "warning",
+					    showCancelButton: true,
+					    closeOnConfirm: true,
+					    cancelButtonText: "取消",
+					    confirmButtonText: "确认!"
+					},function(){
+						sendForm("apply_form", "{$urls.submit}", 1);
+					});
+	  			}else{
+	  				sendForm("apply_form", "{$urls.submit}", 1);
+	  			}
+	    	});
+	    	return false;
+		}
+		return true;
+	}
+{/if}
+{eq name="show.confirm" value="1"}
+	function show_msg()
+	{
+		var auth_type = $('select[name="auth_type"]').val();
+		if (auth_type == 1 || auth_type == 2) {
+			var data = {};
+			var project_id = $('select[name="project_id"]').val();
+			var max_pay = $('input[name="max_pay"]').val();
+			data = {project_id:project_id};
+			$.get("{:url('/augment/getBudget')}", data, function(budget){
+	  			if (max_pay > budget) {
+	  				msg = '最高薪资超出此部门剩余预算'+budget+',点击确认继续!';
+	  				swal({
+					    title: msg,
+					    type: "warning",
+					    showCancelButton: true,
+					    closeOnConfirm: true,
+					    cancelButtonText: "取消",
+					    confirmButtonText: "确认"
+					},function(){
+						sendForm("confirm_form", "{$urls.agree}", 1);
+					});
+	  			}else{
+	  				sendForm("confirm_form", "{$urls.agree}", 1);
+	  			}
+	    	});
+	    	return false;
+		}
+		return true;
+	}
+{/eq}
+</script>
+{/block}

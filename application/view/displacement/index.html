@@ -1,0 +1,54 @@
+{extend name="layout/main" /}
+{block name="ext_css"}
+{/block}
+{block name="content"}
+  <div class="row">
+    <div class="col-md-12">
+      <div class="box box-default">
+        <div class="box-header with-border">
+          <h3 class="box-title">部门异动</h5>
+        </div>
+        <div class="box-body">
+          <div class="row">
+            <div class="col-md-12">
+              <div class="operate panel panel-default">
+                <div class="panel-body">
+                  {include file="layout/search" fields='user,project,duty,time'/}
+                </div>
+              </div>
+              <table data-toggle="table">
+                <thead>
+                  <tr>
+                    <th>申请人</th>
+                    <th>原部门(职能)</th>
+                    <th>异动部门</th>
+                    <th>异动人员</th>
+                    <th>异动时间</th>
+                    <th>异动原因</th>
+                    <th>创建时间</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {foreach $datas as $data}
+                    <tr>
+                      <td>{$data['user_id']|get_user_name}</td>
+                      <td>{$data['original_project_id']|get_project_name}({$data['change_duty_id']|get_duty_name})</td>
+                      <td>{$data['change_project_id']|get_project_name}</td>
+                      <td>{$data['change_user_id']|get_user_name}</td>
+                      <td>{$data['change_time']}</td>
+                      <td>{$data['demand']}</td>
+                      <td>{$data['create_time']}</td>
+                    </tr>
+                  {/foreach}
+                </tbody>
+              </table>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+  {$paginate}
+{/block}
+{block name="ext_js"}
+{/block}

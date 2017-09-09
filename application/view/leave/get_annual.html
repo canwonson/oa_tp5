@@ -1,0 +1,27 @@
+<div class="form-group">
+    <label class="control-label">年假数据</label>
+    <table class="table table-hover table-condensed table-center table-bordered">
+        <thead>
+            <tr class="danger">
+                <td colspan="4">每个年度用不完的年假会在下一年度的6月1日清零!</td>
+            </tr>
+            <tr>
+                <td>年度</td>
+                <td>总年假数</td>
+                <td>已用年假数</td>
+                <td>可用年假数</td>
+            </tr>
+
+        </thead>
+        <tbody>
+            {foreach $data as $annual}
+                <tr >
+                    <td>{$annual['year']}</td>
+                    <td>{$annual['total_day']}</td>
+                    <td>{$annual['used_day']}</td>
+                    <td>{$annual['residue_day']}</td>
+                </tr>
+            {/foreach}
+        </tbody>
+    </table>
+</div>

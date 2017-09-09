@@ -1,0 +1,101 @@
+{extend name="layout/main" /}
+{block name="ext_css"}
+{/block}
+{block name="content"}
+	<div class="row">
+		<div class="col-sm-6">
+			<div class="box box-solid">
+				<div class="box-header with-border">
+					<i class="fa fa-edit"></i>
+					<h3 class="box-title"> {$config.name}</h3>
+				</div>
+				<div class="box-body">
+					<div class="row">
+						<div class="col-sm-12">
+							<form id="apply_form" role="form">
+								<div class="form-group">
+									<label class="control-label">流程标题</label>
+									<input type="text" name="title" class="form-control" value="{$data['title']}" placeholder="输入标题" readonly/>
+								</div>
+								{include file="/purchase/_form" /}
+								<div class="form-group">
+									<label class="control-label">流程走向</label>
+									<div id="form_confirm">{$confirm}</div>
+								</div>
+								{if condition="($mode == 'add') OR ($mode == 'edit') "}
+								<div class="form-group">
+									<input type="hidden" name="mode" value="{$mode}">
+									{eq name="mode" value="edit"}
+									<input type="hidden" name="id" value="{$data['id']}">
+									{/eq}
+								</div>
+								{/if}
+							</form>
+							{include file="/index/file" /}
+							{include file="/flow/apply_footer" /}
+						</div>
+					</div>
+				</div>
+			</div>
+		</div>
+		{include file="/flow/apply_log" /}
+	</div>
+	{include file="/flow/apply_confirm" /}
+{/block}
+{block name="ext_js"}
+{include file="/flow/apply_js" /}
+<script>
+	$(function(){
+		updateStat(0);
+	});
+
+	function update_confirm(total_price){
+	    var data = {total_price:total_price};
+	    $.get("{:url('/purchase/updateConfirm')}", data, function(html){
+	  		$('#form_confirm').html(html);
+	    });
+	}
+
+	function add(element){
+		var count = $('#shopping_list .detail').length;
+		if(count >= 10)    return false;
+		var clone = $(element).parents('.detail').clone();
+		$(element).parents('#shopping_list').append(clone);
+		update();
+	}
+
+	function del(element){
+		var count = $('#shopping_list .detail').length;
+		if(count <= 1)    return false;
+		$(element).parents('.detail').remove();
+		update();
+	}
+
+	function update(){
+		var detail_list = $('#shopping_list .detail');
+		detail_list.each(function(index, el) {
+			$(el).find('#list_id').html(index + 1);
+		});
+		updateStat(1);
+	}
+
+	function updateStat(type)
+	{
+		var detail_list = $('#shopping_list .detail');
+		var count = total = price = 0;
+		detail_list.each(function(index, el) {
+			var item_num = !isNaN($(el).find('#item_num').val()) ? parseInt($(el).find('#item_num').val()) : 0;
+			var item_price = !isNaN($(el).find('#item_price').val()) ? parseInt($(el).find('#item_price').val()) : 0;
+			count += 1;
+			total += item_num;
+			price += item_num * item_price;
+		});
+		total = isNaN(total) ? 0 : total;
+		price = isNaN(price) ? 0 : price;
+		$('#stat_count').html(count);
+		$('#stat_total').html(total);
+		$('#stat_price').html(price);
+		type == 1 && update_confirm(price);
+	}
+</script>
+{/block}

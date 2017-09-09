@@ -1,0 +1,47 @@
+<div class="form-group">
+  <label for="">模块名称</label>
+  <select class="form-control module_select" name="pid">
+      <option value="0" {eq name="data['pid']" value="0"}selected="selected"{/eq} >根模块</option>
+      {foreach $modules as $key => $module}
+          <option value="{$key}" {eq name="data['pid']" value="$key"}selected="selected"{/eq} >{$module}</option>
+      {/foreach}
+  </select>
+</div>
+<div class="form-group">
+  <label for="">菜单名称</label>
+  <input class="form-control" type="text" name="name" value="{$data['name']}">
+</div>
+<div class="form-group">
+  <label for="">控制器</label>
+  <input class="form-control" type="text" name="controller" value="{$data['controller']}">
+</div>
+<div class="form-group">
+  <label for="">方法</label>
+  <input class="form-control" type="text" name="action" value="{$data['action']}">
+</div>
+<div class="form-group">
+  <label for="">菜单图标</label>
+  <input class="form-control" type="text" name="icon" value="{$data['icon']}">
+</div>
+<div class="form-group">
+  <label for="">菜单排序</label>
+  <input class="form-control" type="text" name="sort" value="{$data['sort']}">
+</div>
+<div class="form-group">
+  <label for="">状态</label>
+  <div class="input-group">
+    <input name="status" id="status" value="1" type="radio" {eq name="data['status']" value="1"}checked="checked"{/eq}>
+    <label for="status">启用</label>
+    <input name="status" id="status" value="0" type="radio" {eq name="data['status']" value="0"}checked="checked"{/eq}>
+    <label for="status">停用</label>
+  </div>
+</div>
+<div class="form-group">
+  <label for="">显示</label>
+  <div class="input-group">
+    <input name="is_show" id="is_show" value="1" type="radio" {eq name="data['is_show']" value="1"}checked="checked"{/eq}>
+    <label for="is_show">显示</label>
+    <input name="is_show" id="is_show" value="0" type="radio" {eq name="data['is_show']" value="0"}checked="checked"{/eq}>
+    <label for="is_show">隐藏</label>
+  </div>
+</div>

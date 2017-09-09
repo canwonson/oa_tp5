@@ -1,0 +1,19 @@
+<div class="form-group">
+	<label class="control-label">加班数据*</label>
+	<table class="table table-hover table-condensed table-center table-bordered">
+        <thead>
+            <tr class="danger">
+                <td>加班时间</td>
+                <td>已用补休时间</td>
+                <td>可用补休时间</td>
+            </tr>
+        </thead>
+        <tbody>
+            <tr>
+                <td>{$data['available']}</td>
+                <td>{$data['used']}</td>
+                <td>{$data['available']-$data['used']}</td>
+            </tr>
+        </tbody>
+    </table>
+</div>

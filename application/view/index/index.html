@@ -1,0 +1,60 @@
+{extend name="layout/main" /}
+{block name="content"}
+  <section class="col-lg-6 connectedSortable ui-sortable">
+		<div class="box box-primary" style="min-height: 800px;">
+      		<div style="cursor: move;" class="box-header ui-sortable-handle">
+	        	<i class="ion ion-clipboard"></i>
+	        	<h3 class="box-title">公告</h3>
+	     	 </div>
+      		<div class="box-body">
+          		<ul class="products-list product-list-in-box">
+          			{foreach $notices as $key => $notice}
+          				<li class="item">
+            				<div class="product-info">
+              					<a href="{:url('/notice/read', ['id'=>$notice.id])}" class="product-title">{$notice.title}</a>
+              					<span class="label label-success pull-right">{$notice['create_time']}</span>
+              					{eq name="key" value="0"}
+               						<div class="mailbox-read-message" id="notice_content" style="position: relative; overflow: scroll; width: auto; height: 475px;">
+                    					{$notice['content']|htmlspecialchars_decode=###}
+                					</div>
+              					{/eq}
+            				</div>
+          				</li>
+          			{/foreach}
+        		</ul>
+      		</div>
+      <!-- /.box-body -->
+      <div class="box-footer clearfix no-border">
+        	<a type="button" class="btn btn-default pull-right" href="{:url('/notice/index')}"><i class="fa fa-plus"></i> 查看更多</a>
+      </div>
+    </div>
+	</section>
+
+  <section class="col-lg-6 connectedSortable ui-sortable">
+    <div class="box box-primary">
+      <div class="box-header w</h3>
+      </div>
+      <!-- /.box-header -->
+      <div class="box-body no-padding">
+        <div class="mailbox-read-info">
+          <div class="input-group">
+            <input type="text" class="form-control" name="serch" placeholder="关键字查询:">
+            <span class="input-group-btn">
+              <button name="search" id="search-btn" class="btn btn-flat" onclick="serch();"><i class="fa fa-search"></i>
+              </button>
+            </span>
+          </div>
+          <h5>&nbsp
+            <span class="mailbox-read-time pull-right">更新于:{$regulation.time|date="Y-m-d H:i:s",###}</span></h5>
+        </div>
+        <!-- /.mailbox-controls -->
+        <div class="mailbox-read-message" id="regulation_content" style="position: relative; overflow: scroll; width: auto; height: 700px;">
+          {$regulation.content|htmlspecialchars_decode=###}
+        </div>
+        <!-- /.mailbox-read-message -->
+      </div>
+      <!-- /.box-body -->
+    </div>
+    <!-- /. box -->
+  </section>
+{/block}

@@ -1,0 +1,57 @@
+{extend name="layout/main" /}
+{block name="ext_css"}
+{/block}
+{block name="content"}
+  <div class="row">
+    <div class="col-md-12">
+      <div class="box box-default">
+        <div class="box-header with-border">
+          <h3 class="box-title">印章申请</h5>
+        </div>
+        <div class="box-body">
+          <div class="row">
+            <div class="col-md-12">
+              <div class="operate panel panel-default">
+                <div class="panel-body">
+                  {include file="layout/search" fields='user,project,duty,time'/}
+                </div>
+              </div>
+              <table data-toggle="table">
+                <thead>
+                  <tr>
+                    <th>员工</th>
+                    <th>部门(职能)</th>
+                    <th>印章类型</th>
+                    <th>印章名称</th>
+                    <th>是否外借</th>
+                    <th>外借时间</th>
+                    <th>使用事由</th>
+                    <th>用章文件全称</th>
+                    <th>提交时间</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {foreach $datas as $data}
+                    <tr>
+                      <td>{$data['user_id']|get_user_name}</td>
+                      <td>{$data['project_id']|get_project_name}({$data['duty_id']|get_duty_name})</td>
+                      <td>{present name="conf_type['conf_stamp_type'][$data['stamp_type']]"}{$conf_type['conf_stamp_type'][$data['stamp_type']]}{else/}{$data['stamp_type']}{/present}</td>
+                      <td>{$data['stamp_name']}</td>
+                      <td>{$conf_type['conf_is_outer'][$data['is_outer']]}</td>
+                      <td>{neq name="data['outer_time']" value ="1970-01-01 08:00"}{$data['outer_time']}{/neq}</td>
+                      <td>{$data['use_reason']}</td>
+                      <td>{$data['stamp_file_name']}</td>
+                      <td>{$data['create_time']}</td>
+                    </tr>
+                  {/foreach}
+                </tbody>
+              </table>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+{/block}
+{block name="ext_js"}
+{/block}

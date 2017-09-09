@@ -1,0 +1,95 @@
+{present name="plugin"}
+	{in name="'upload'" value="$plugin"}
+	  	{load href="/public/static/js/jquery-form.js"}
+	{/in}
+	{in name="'date'" value="$plugin"}
+		{load href="/public/static/AdminLTE-2.3.6/plugins/bootstrap-datetimepicker/bootstrap-datetimepicker.js"}
+		{load href="/public/static/AdminLTE-2.3.6/plugins/bootstrap-datetimepicker/locales/bootstrap-datetimepicker.zh-CN.js"}
+	{/in}
+	{in name="'date_time'" value="$plugin"}
+		{load href="/public/static/AdminLTE-2.3.6/plugins/bootstrap-datetimepicker/bootstrap-datetimepicker.js"}
+		{load href="/public/static/AdminLTE-2.3.6/plugins/bootstrap-datetimepicker/locales/bootstrap-datetimepicker.zh-CN.js"}
+	{/in}
+	{in name="'table'" value="$plugin"}
+		{load href="/public/static/plugins/bootstrap-table/bootstrap-table.min.js"}
+	  	{load href="/public/static/plugins/bootstrap-table/bootstrap-table-locale-all.min.js"}
+	{/in}
+	{in name="'editor'" value="$plugin"}
+		{load href="/public/static/plugins/ckeditor/ckeditor.js"}
+	{/in}
+	{in name="'select2'" value="$plugin"}
+		{load href="/public/static/plugins/select2/select2.min.js"}
+	{/in}
+	{in name="'sweetalert'" value="$plugin"}
+		{load href="/public/static/plugins/sweetalert/sweetalert.min.js"}
+	{/in}
+	{in name="'icheck'" value="$plugin"}
+		{load href="/public/static/AdminLTE-2.3.6/plugins/iCheck/icheck.min.js"}
+	{/in}
+	<script>
+	$(function(){
+		{in name="'date_time'" value="$plugin"}
+		    $(".date-picker").datetimepicker({
+		  		language:'zh-CN',
+		  		format: "yyyy-mm-dd hh:ii",
+		  		autoclose: true,
+		  		todayBtn: true,
+		  		minuteStep: 10
+		    });
+	    {/in}
+		{in name="'date'" value="$plugin"}
+		    $(".date-picker").datetimepicker({
+		    	minView: "month",
+		  		language:'zh-CN',
+		  		format: "yyyy-mm-dd",
+		  		autoclose: true,
+		  		todayBtn: true,
+		  		minuteStep: 10
+		    });
+	    {/in}
+		{in name="'flow_details'" value="$plugin"}
+		    $('.btn_details').click(function(){
+			    var tr_parents = $(this).parents('tr');
+			    $('tr').removeClass()
+			    tr_parents.addClass('success');
+			    $('.table_details').fadeOut();
+			    $.get($(this).attr('href'),'',function(html){
+			      tr_parents.after(html).fadeIn();
+			    },'html');
+			    return false;
+			  });
+	    {/in}
+		{in name="'select2'" value="$plugin"}
+		    var select2 = $(".select2").select2();
+	    {/in}
+		{in name="'select2_user'" value="$plugin"}
+			$(".select_all").on("click", function () {
+				var data = [];
+				$("#select_users option").each(function(index, el) {
+					data.push($(el).val());
+				});
+				select2.val(data).trigger("change");
+			});
+			$(".select_clear").on("click", function () {
+				select2.val(null).trigger("change");
+			});
+	    {/in}
+	    {in name="'icheck_radio'" value="$plugin"}
+			//iCheck
+	      	$(".icheck_radio").iCheck({
+	        	checkboxClass: "icheckbox_square-blue",
+	        	radioClass: "iradio_square-blue",
+	        	increaseArea: "20%" // optional
+	      	});
+      	{/in}
+	});
+
+		{in name="'editor'" value="$plugin"}
+		    CKEDITOR.replace( 'editor' );
+		    function CKupdate() {
+                for (instance in CKEDITOR.instances)
+                CKEDITOR.instances[instance].updateElement();
+            }
+	    {/in}
+	</script>
+{/present}

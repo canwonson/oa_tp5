@@ -1,0 +1,19 @@
+<div class="form-group">
+	<select class="form-control select2" multiple="multiple" name="show[]" id="select_users">
+	  	{foreach $users as $project_id => $duties}
+	  		<optgroup label="{$project_id|get_project_name}">
+	  			{foreach $duties as $duty}
+	  				{foreach $duty as $user}
+	  					<option value="{$user.id}" {in name="$user.id" value="$data.show"}selected="selected"{/in}>{$user.name}</option>
+	  				{/foreach}
+	  			{/foreach}
+			</optgroup>
+	  	{/foreach}
+	</select>
+</div>
+<div class="form-group">
+	<div class="btn-group" role="group" aria-label="...">
+	  	<button type="button" class="btn btn-success select_all">全选</button>
+	  	<button type="button" class="btn btn-danger select_clear">清空</button>
+	</div>
+</div>

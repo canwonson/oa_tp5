@@ -1,0 +1,22 @@
+<table class="table table-condensed table-hover table-bordered table-center table-middle table_details">
+	<thead>
+		<tr class="success">
+			<th>加班开始时间</th>
+			<th>加班结束时间</th>
+			<th>加班时长(天)</th>
+			<th>加班事由</th>
+			<th>创建时间</th>
+		</tr>
+	</thead>
+	<tbody>
+		{foreach $datas as $data}
+			<tr class="success">
+				<td>{$data['start_time']}</td>
+				<td>{$data['end_time']}</td>
+				<td>{$data['overtime']}</td>
+				<td>{$data['overtime_reason']}</td>
+				<td>{$data['create_time']}</td>
+			</tr>
+		{/foreach}
+	</tbody>
+</table>

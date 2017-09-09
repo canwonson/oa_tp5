@@ -1,0 +1,48 @@
+{extend name="layout/main" /}
+{block name="ext_css"}
+{/block}
+{block name="content"}
+  <div class="row">
+    <div class="col-md-12">
+      <div class="box box-default">
+        <div class="box-header with-border">
+          <h3 class="box-title">异常出勤</h5>
+        </div>
+        <div class="box-body">
+          <div class="row">
+            <div class="col-md-12">
+              <div class="operate panel panel-default">
+                <div class="panel-body">
+                  {include file="layout/search" fields='user,project,duty,time'/}
+                </div>
+              </div>
+              <table data-toggle="table">
+                <thead>
+                  <tr>
+                    <th>员工</th>
+                    <th>部门(职能)</th>
+                    <th>异常次数</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {foreach $datas as $data}
+                    <tr>
+                      <td>{$data['user_id']|get_user_name}</td>
+                      <td>{$data['project_id']|get_project_name}({$data['duty_id']|get_duty_name})</td>
+                      <td>
+                        <a href="details?user={$data['user_id']}&start_time={$param['start_time']}&end_time={$param['end_time']}" class="btn_details">{$data['count']}</a>
+                      </td>
+                    </tr>
+                  {/foreach}
+                </tbody>
+              </table>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+  {$paginate}
+{/block}
+{block name="ext_js"}
+{/block}

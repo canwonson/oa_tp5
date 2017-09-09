@@ -1,0 +1,36 @@
+<div class="form-group">
+	<label for="original_project_id">原项目</label>
+		<select name="original_project_id" id="original_project_id" class="form-control" {notin name="mode" value="add,edit"}readonly{/notin} onchange="update_confirm()">
+		{foreach $config['param']['project_list'] as $id => $conf}
+			<option value="{$id}" {present name="data['original_project_id']"}{eq name="$id" value="$data['original_project_id']"}selected="selected"{/eq}{/present}>{$conf}</option>
+		{/foreach}
+	</select>
+</div>
+<div class="form-group">
+	<label for="change_project_id">异动项目</label>
+		<select name="change_project_id" id="change_project_id" class="form-control" {notin name="mode" value="add,edit"}readonly{/notin}>
+		{foreach $config['param']['project_list'] as $id => $conf}
+			<option value="{$id}" {present name="data['change_project_id']"}{eq name="$id" value="$data['change_project_id']"}selected="selected"{/eq}{/present}>{$conf}</option>
+		{/foreach}
+	</select>
+</div>
+<div class="form-group">
+	<label for="change_duty_id">异动职能</label>
+	<select name="change_duty_id" id="change_duty_id" class="form-control" {notin name="mode" value="add,edit"}readonly{/notin}>
+		{foreach $config['param']['duty_list'] as $id => $conf}
+			<option value="{$id}" {present name="data['change_duty_id']"}{eq name="$id" value="$data['change_duty_id']"}selected="selected"{/eq}{/present}>{$conf}</option>
+		{/foreach}}
+	</select>
+</div>
+<div class="form-group">
+	<label class="control-label">异动人员</label>
+	<input type="text" class="form-control" name="change_user_id" placeholder="异动人员" value="{$data['change_user_id']}" {notin name="mode" value="add,edit"}readonly{/notin}>
+</div>
+<div class="form-group">
+	<label class="control-label">异动时间</label>
+	<input type="text" class="form-control date-picker" name="change_time" placeholder="异动时间" data-date-format="yyyy-mm-dd" value="{$data['change_time']}" {notin name="mode" value="add,edit"}readonly{/notin}>
+</div>
+<div class="form-group">
+	<label class="control-label">异动原因</label>
+	<textarea class="form-control" name="demand" rows="5" {notin name="mode" value="add,edit"}readonly{/notin}>{$data['demand']}</textarea>
+</div>

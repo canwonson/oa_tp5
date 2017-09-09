@@ -1,0 +1,32 @@
+<div class="form-group">
+	<label for="stamp_type">申请印章类型</label>
+		<select name="stamp_type" id="stamp_type" class="form-control" {notin name="mode" value="add,edit"}readonly{/notin}>
+		{foreach $config['param']['conf_stamp_type'] as $id => $conf}
+			<option value="{$id}" {present name="data['stamp_type']"}{eq name="$id" value="$data['stamp_type']"}selected="selected"{/eq}{/present}>{$conf}</option>
+		{/foreach}
+	</select>
+</div>
+<div class="form-group">
+	<label class="control-label">印章名称</label>
+	<input type="text" class="form-control" name="stamp_name" placeholder="印章名称" value="{$data['stamp_name']}" {notin name="mode" value="add,edit"}readonly{/notin}>
+</div>
+<div class="form-group">
+	<label for="is_outer">是否外借</label>
+	<select name="is_outer" id="is_outer" class="form-control" {notin name="mode" value="add,edit"}readonly{/notin}>
+		{foreach $config['param']['conf_is_outer'] as $id => $conf}
+			<option value="{$id}" {present name="data['is_outer']"}{eq name="$id" value="$data['is_outer']"}selected="selected"{/eq}{/present}>{$conf}</option>
+		{/foreach}}
+	</select>
+</div>
+<div class="form-group">
+	<label class="control-label">外借时间</label>
+	<input type="text" class="form-control date-picker" name="outer_time" placeholder="外借时间" data-date-format="yyyy-mm-dd hh:ii" value="{$data['outer_time']}" {notin name="mode" value="add,edit"}readonly{/notin}>
+</div>
+<div class="form-group">
+	<label class="control-label">用章文件全称</label>
+	<input type="text" class="form-control" name="stamp_file_name" placeholder="用章文件全称" value="{$data['stamp_file_name']}" {notin name="mode" value="add,edit"}readonly{/notin}>
+</div>
+<div class="form-group">
+	<label class="control-label">印章使用事由</label>
+	<textarea class="form-control" name="use_reason" rows="5" {notin name="mode" value="add,edit"}readonly{/notin}>{$data['use_reason']}</textarea>
+</div>

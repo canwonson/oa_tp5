@@ -1,0 +1,86 @@
+{extend name="layout/main" /}
+{block name="ext_css"}
+{/block}
+{block name="content"}
+    <div class="row">
+        <div class="col-md-12">
+            <div class="box box-default">
+                <div class="box-header with-border">
+                    <h3 class="box-title">年假详情</h5>
+                </div>
+                <div class="box-body">
+                    <div class="row">
+                        <div class="col-md-12">
+                            <div class="operate panel panel-default">
+                                <div class="panel-body">
+                                    <div class="pull-right">
+                                        <a href="{:url('/annual/create')}" class="btn btn-sm btn-primary">新增</a>
+                                      </div>
+                                </div>
+                            </div>
+                            <table data-toggle="table">
+                                <thead>
+                                    <tr>
+                                        <th>年份</th>
+                                        <th>总年假数</th>
+                                        <th>已用年假</th>
+                                        <th>剩余年假</th>
+                                        <th>状态</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    {foreach $data.list as $value}
+                                        <tr>
+                                            <td>{$value.year}</td>
+                                            <td>{$value.total_day}</td>
+                                            <td>{$value.used_day}</td>
+                                            <td>{$value.residue_day}</td>
+                                            <td>{$annual_status[$value.status]}</td>
+                                        </tr>
+                                    {/foreach}
+                                </tbody>
+                            </table>
+                            <br>
+                            <table data-toggle="table">
+                                <thead>
+                                    <tr>
+                                        <th>年份</th>
+                                        <th>开始时间</th>
+                                        <th>结束时间</th>
+                                        <th>休假天数</th>
+                                        <th>状态</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    {foreach $annual_log as $row}
+                                        <tr>
+                                        	<td>{$row.year}</td>
+                                            <td>{$row.start_time}</td>
+                                            <td>{$row.end_time}</td>
+                                            <td>{$row.leave_day}</td>
+                                            <td>{$annual_log_status[$row.status]}</td>
+                                        </tr>
+                                    {/foreach}
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+{/block}
+{block name="ext_js"}
+    <script>
+        function switcher(id, name, value) {
+            _switcher(id, name, value, "{:url('/position/switcher')}");
+        }
+
+        function del(id) {
+            var msg = '确定要删除?';
+            var parame = {id:id};
+            var url = "{:url('/position/destroy')}";
+            ui_confirm(msg, url, parame);
+        }
+    </script>
+{/block}

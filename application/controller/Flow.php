@@ -1,0 +1,929 @@
+<?php
+namespace app\controller;
+use app\controller\Base;
+use think\Loader;
+use think\Config;
+
+class Flow extends Base
+{
+	private static $status = [0 => '审核中', 1 => '通过', 2 => '拒绝', 3 => '回退', 4 => '不建议'];
+
+	private function checkAccess($flow_id, $action='read')
+	{
+		$user_id = get_user_id();
+		$where['flow_id'] = $flow_id;
+		if ($action == 'read') {
+			$Auth = new \util\Auth();
+			$pandect_check = $Auth::check('flow', 'pandect');
+			$count = model('Flow')->where(['user_id'=>$user_id, 'id'=>$flow_id])->count();
+			$log_count = model('FlowLog')->where($where)->where(['user_id'=>$user_id, 'is_del'=>0])->count();
+			$report_count = model('FlowReport')->where($where)->where(['uid'=>$user_id])->count();
+			if ($count || $log_count || $pandect_check || $report_count) {
+				return true;
+			}
+		}
+		if ($action == 'confirm') {
+			$count = model('FlowLog')->where($where)->where(['user_id'=>$user_id, 'is_del'=>0])->where('result is null')->count();
+			if ($count) {
+				return true;
+			}
+		}
+		return false;
+	}
+
+	//流程申请主页面
+    public function index()
+    {
+        $FlowConfig = model('FlowConfig');
+        $tag_list = $FlowConfig->getFlowList(1, ['id','name','classify','controller']);
+        return $this->fetch('index', ['tag_list'=>$tag_list]);
+    }
+
+	//流程申请管理页面
+	public function manage()
+	{
+		$FlowConfig = model('FlowConfig');
+        $tag_list = $FlowConfig->getFlowList(0, ['id','name','classify','controller', 'status']);
+        return $this->fetch('manage', ['tag_list'=>$tag_list]);
+	}
+
+	//流程组管理页面
+	public function classify($id = null)
+	{
+		$plugin = ['select2'];
+		$FlowClassify = model('FlowClassify');
+		$data=[
+			'name' => '',
+			'status' => 1,
+			'is_del' =>0
+		];
+		$mode = 'add';
+		if ($id) {
+			$data = $FlowClassify->get($id);
+			$mode = 'edit';
+		}
+
+		return $this->fetch('classify', ['data' => $data, 'mode'=>$mode, 'plugin'=>$plugin]);
+	}
+
+	//流程组保存操作
+	public function classifySave()
+	{
+		$name = 'FlowClassify';
+		$this->_save($name);
+	}
+
+	//流程配置页面
+	public function config($id = null, $cid =null)
+	{
+		$plugin = ['select2', 'icheck', 'icheck_radio'];
+		$FlowConfig = model('FlowConfig');
+		$FlowAudit = model('FlowAudit');
+		$data = [
+			'name' => '',
+			'status' => 1,
+			'classify' => $cid,
+			'report_user' => '',
+			'controller' => ''
+		];
+		$mode = 'add';
+		if ($id) {
+			$data = $FlowConfig->get($id);
+			$audits = $FlowAudit->where(['type' => $id, 'is_del'=>0])->column('name, status, audit_conf', 'id');
+			foreach ($audits as $key => &$audit) {
+				$audit_conf = explode(',', $audit['audit_conf']);
+				$conf = [];
+				foreach ($audit_conf as $step => $row) {
+					$conf[$step] = explode('|', $row);
+				}
+				$flow_name = $FlowConfig->getFlowName($conf);
+				$audit_name = implode(' -> ', $flow_name);
+				$audit['audit_name'] = $audit_name;
+			}
+			$data['audits'] = $audits;
+			$mode = 'edit';
+		}
+		$users = model('user')->getUserList();
+
+		$user_list = model('user')->column('name', 'id');
+		$unset_user = [];
+		// foreach ($user_list as $user_id => $name) {
+		// 	$flow = $FlowConfig->getFlow($id, [], null, $user_id);
+		// 	if (empty($flow['confirm_list'][0])) {
+		// 		$unset_user[] = $name . "[{$user_id}]";
+		// 	}
+		// }
+		return $this->fetch('config', ['data' => $data, 'mode'=>$mode, 'plugin'=>$plugin, 'users'=>$users, 'unset_user' => $unset_user]);
+	}
+
+	//流程配置保存操作
+	public function configSave()
+	{
+		set_url('/flow/manage');
+		$name = 'FlowConfig';
+		$this->_save($name);
+	}
+
+	//流程走向配置页面
+	public function audit($id = null, $tid =null)
+	{
+		$plugin = ['select2'];
+		$FlowAudit = model('FlowAudit');
+		$FlowAuditConfig = model('FlowAuditConfig');
+		$data=[
+			'name'        => '',
+			'audit_conf'  => '',
+			'type'        => $tid,
+			'status'      => 1,
+			'project_id'  => [],
+			'duty_id'     => [],
+			'position_id' => []
+		];
+		$mode = 'add';
+		if ($id) {
+			$data = $FlowAudit->get($id);
+			//获取相关配置
+			$data['project_id'] = $FlowAuditConfig->where(['audit_id' => $id])->column('project_id');
+			$data['duty_id'] = $FlowAuditConfig->where(['audit_id' => $id])->column('duty_id');
+			$data['position_id'] = $FlowAuditConfig->where(['audit_id' => $id])->column('position_id');
+			$mode = 'edit';
+		}
+		$conf_list = model('Common')->getConfList();
+		return $this->fetch('audit', ['data' => $data, 'mode'=>$mode, 'conf_list'=>$conf_list, 'plugin'=>$plugin]);
+	}
+
+	//流程走向保存操作
+	public function auditSave()
+	{
+		$id = input('post.id');
+		$type = input('post.type');
+		set_url('/flow/config/id/'.$type);
+		$FlowAuditConfig = model('FlowAuditConfig');
+		if (!$id) {
+			$name = 'FlowAudit';
+			$this->_save($name, true);
+			exit;
+		}
+		$project_id = input('post.project_id/a');
+		$duty_id = input('post.duty_id/a');
+		$position_id = input('post.position_id/a');
+		if (is_array($project_id) && count($project_id)>0 && is_array($duty_id) && count($duty_id)>0 && is_array($position_id) && count($position_id)>0) {
+			$FlowAuditConfig->where(['audit_id'=>$id, 'type'=>$type])->delete();
+			for ($i=0; $i < count($project_id); $i++) {
+				for ($d=0; $d < count($duty_id); $d++) {
+					for ($p=0; $p < count($position_id); $p++) {
+						$data[] = [
+							'project_id'  => $project_id[$i],
+							'duty_id'     => $duty_id[$d],
+							'position_id' => $position_id[$p],
+							'type'        => $type,
+							'audit_id'    => $id
+						];
+					}
+				}
+			}
+			if (!empty($data)) {
+				if($FlowAuditConfig->saveAll($data)){
+					$name = 'FlowAudit';
+					$this->_save($name, true);
+				}else{
+					$this->error('适用配置保存失败');
+				}
+			}
+		}else {
+			$this->error('适用配置不能为空!');
+		}
+	}
+
+	//流程走向删除标记操作
+	public function auditDel()
+	{
+		$id   = input('post.id');
+		$type = input('post.type');
+		set_url('/flow/config/id/'.$type);
+		$FlowAuditConfig = model('FlowAuditConfig');
+		$FlowAuditConfig->where(['audit_id'=>$id, 'type'=>$type])->delete();
+		$name = 'FlowAudit';
+		$this->_del($name, true);
+	}
+
+	//流程申请(公用方法)
+    public function apply()
+    {
+		$FlowConfig      = model('FlowConfig');
+		$config          = $FlowConfig->getConfig();
+		$config['param'] = $this->getParam();
+		$plugin          = $this->getPlugin();
+        $data = [
+            'title' => $config['name'].date('YmdHis').get_user_name(),
+        ];
+        $default_data = $this->data();
+        $default_data && $data += $default_data;
+		$show = [
+			'log'     => 0,
+			'confirm' => 0
+		];
+		$confirm = $this->getConfirm();
+		$urls    = $this->getUrl('apply');
+
+        return $this->fetch('apply', ['data'=>$data, 'config'=>$config, 'mode'=>'add', 'show'=>$show, 'confirm'=>$confirm, 'plugin'=>$plugin, 'urls'=>$urls]);
+    }
+
+    public function flowSave()
+    {
+		$request = request();
+		$controller = $request->controller();
+		$this -> _flow_save($controller);
+    }
+
+	public function _flow_save($name = null)
+    {
+    	$type = model('FlowConfig')->where(['controller' => strtolower($name)])->value('id');
+		$data = input('post.');
+        $validate = Loader::validate($name);
+        if(!$validate->check($data)){
+            $this->ajaxError($validate->getError());
+        }
+        if (method_exists($this, 'extCheck')) {
+        	$check = $this->extCheck($data);
+	        if (!$check['res']) {
+	            $this->ajaxError($check['msg']);
+	        }
+        }
+		switch ($data['mode']) {
+            case 'add':
+                unset($data['mode']);
+                $flow_id = $this->flowAdd($data['title'], $type);
+                $data['flow_id'] = $flow_id;
+				if(method_exists($this, 'extSave')) {
+		        	$save = $this->extSave($data);
+					if (!$save['res']) {
+			            $this->ajaxError($save['msg']);
+			        }
+		        }
+                $this -> _details_insert($name, $data);
+                break;
+
+            case 'edit':
+                unset($data['mode']);
+                $data['flow_id'] =$data['id'];
+				if(method_exists($this, 'extDel')) {
+					$this->extDel($data['flow_id']);
+		        	$save = $this->extSave($data);
+					if (!$save['res']) {
+			            $this->ajaxError($save['msg']);
+			        }
+		        }
+                $this -> _details_update($name, $data);
+                break;
+
+            default:
+               $this -> ajaxError("非法操作");
+        }
+    }
+
+    //插入数据
+	protected function _details_insert($name=null, $data, $filed=false)
+	{
+        $save_data = $this->saveData($data);
+        $result = model($name)->save($save_data);
+        $file_save = ['Leave', 'Purchase'];
+        if (in_array($name, $file_save)) {
+        	$img_result = controller('file')->update_id($data['files_id'], 'flow', $data['flow_id']);
+	        if ($img_result !== true) {
+	            $this->ajaxError($img_result);
+	        }
+        }
+        if ($result) {
+            $this->nextStep($data['flow_id'], $data);
+            $this->success("提交成功!", '/flow/submit');
+        } else {
+            $this->ajaxError("提交失败-0002!请重试或联系管理员");
+        }
+	}
+
+	//更新数据
+    protected function _details_update($name=null, $data, $filed=false)
+    {
+        $model = model($name);
+        if (!isset($data['id'])) {
+            $this -> ajaxError('修改失败-0001!');
+        }
+		$this->flowUpdate($data);
+
+		$save_data = $this->saveData($data, 0);
+        //保存对象
+        $result = $model->save($save_data,['flow_id' => $data['id']]);
+        if (false !== $result) {
+            //成功提示
+            $this->nextStep($data['id']);
+            $this -> success('修改成功!', '/flow/submit');
+        } else {
+            //错误提示
+            $this -> ajaxError('修改失败-0002!');
+        }
+    }
+
+	//已提交页面
+	public function submit()
+	{
+		$plugin = ['table'];
+		$Flow  = model('Flow');
+		$where = ['user_id' => get_user_id(), 'is_del' => 0];
+		$datas = $Flow->where($where)->field('id, title, type, step, status, create_time')->order('create_time desc')->paginate(15);
+		$list = [];
+		foreach ($datas as $data) {
+			$data   = $this->getFlowData($data, 'read');
+			$list[] = $data;
+		}
+		return $this->fetch('submit', ['list' => $list,'paginate'=>$datas->render(), 'plugin'=>$plugin]);
+	}
+
+	//待审核页面
+	public function confirm()
+	{
+		$plugin = ['table'];
+		$FlowLog = model('FlowLog');
+		$Flow    = model('Flow');
+		$log_list = $FlowLog->where(['user_id' => get_user_id(), 'is_del' => 0])->where('result is null')->column('flow_id');
+		$list = [];
+		$paginate = '';
+		if ($log_list) {
+			$where = ['id' => ['in', $log_list], 'is_del' => 0];
+			$datas = $Flow->where($where)->field('id, title, type, step, status,create_time')->order('create_time desc')->paginate(15);
+			foreach ($datas as $data) {
+				$data   = $this->getFlowData($data, 'confirmRead');
+				$list[] = $data;
+			}
+			$paginate = $datas->render();
+		}
+		return $this->fetch('confirm', ['list'=>$list, 'paginate'=>$paginate, 'plugin'=>$plugin]);
+	}
+
+	protected function getFlowData($flow_data, $action){
+		$FlowConfig          = model('FlowConfig');
+		$info                = $FlowConfig->where(['id' => $flow_data['type']])->field('name,controller')->find();
+		$data                = controller($info['controller'])->data($flow_data['id']);
+		$flow                = $FlowConfig->getFlow($flow_data['type'], $data, $flow_data['id']);
+		$flow_data['step']   = isset($flow['flow_name'][$flow_data['step']]) ? $flow['flow_name'][$flow_data['step']] : $flow_data['step'];
+		$flow_data['status'] = self::$status[$flow_data['status']];
+		$flow_data['type']   = $info['name'];
+		$flow_data['url']    = url('/' . $info['controller'] . '/' . $action,['id' => $flow_data['id']]);
+
+		return $flow_data;
+	}
+
+	//流程查看页面
+	public function read($id)
+	{
+		$check           = $this->checkAccess($id);
+		if (!$check) {
+			return $this->error("您没有此权限！");
+		}
+		$Flow            = model('Flow');
+		$FlowConfig      = model('FlowConfig');
+		$flow            = $Flow->get($id);
+		$config          = $FlowConfig->getConfig($flow['type']);
+		$config['param'] = $this->getParam();
+		$plugin          = $this->getPlugin();
+		$data            = [
+			'id'    => $id,
+			'title' => $flow['title']
+        ];
+		$flow_data          = $this->data($id);
+		$flow_data && $data += $flow_data;
+
+		$show               = ['log' => 1, 'confirm' => 0];
+		$mode               = $flow['is_edit'] && (get_user_id() == $flow_data['user_id']) ? 'edit' : 'read';
+		$confirm            = $this->getConfirm($id);
+		$flow_log           = $this->getFlowLog($id);
+		$urls               = $this->getUrl('apply');
+		$comment_conf       = $FlowConfig->getCommentConf($id);
+        return $this->fetch('apply', ['data'=>$data, 'config'=>$config, 'mode'=>$mode, 'show'=>$show, 'confirm'=>$confirm, 'flow_log'=>$flow_log, 'plugin'=>$plugin, 'urls'=>$urls, 'comment_conf'=>$comment_conf]);
+	}
+
+	//流程审核查看页面
+	public function confirmRead($id)
+	{
+		$check           = $this->checkAccess($id, 'confirm');
+		if (!$check) {
+			return $this->error("您没有此权限！");
+		}
+		$Flow            = model('Flow');
+		$FlowConfig      = model('FlowConfig');
+		$flow            = $Flow->get($id);
+		$config          = $FlowConfig->getConfig($flow['type']);
+		$config['param'] = $this->getParam();
+		$plugin          = $this->getPlugin();
+		$flow_info       = $Flow->where(['id' => $id])->field('step, title, type')->find();
+        $data = [
+			'id'    => $id,
+			'step'  => $flow_info['step'],
+			'title' => $flow_info['title'],
+        ];
+		$flow_data          = $this->data($id);
+		$flow_data && $data += $flow_data;
+		$show               = ['log' => 1, 'confirm' => 1];
+		$mode               = 'confirm';
+		$confirm            = $this->getConfirm($id);
+		$confirm_list       = explode(' -> ', $confirm);
+		$flow_log           = $this->getFlowLog($id);
+		$urls               = $this->getUrl('confirm');
+		$comment_conf       = $FlowConfig->getCommentConf($id);
+        return $this->fetch('apply', ['data'=>$data, 'config'=>$config, 'mode'=>$mode, 'show'=>$show, 'confirm'=>$confirm, 'flow_log'=>$flow_log, 'confirm_list'=>$confirm_list, 'plugin'=>$plugin, 'urls'=>$urls, 'comment_conf'=>$comment_conf]);
+	}
+
+	//获取审核日志方法
+	public function getFlowLog($id)
+	{
+		$where =[
+			'flow_id' => $id,
+			'is_del'  => 0,
+			'result'  => ['exp', 'is not null']
+		];
+		$data = db('flow_log')->where($where)->field('user_id, step, result, comment, update_time')->order('create_time asc')->select();
+		foreach ($data as &$value) {
+			$value['comment'] = explode('|', $value['comment']);
+		}
+		return $data;
+	}
+
+	//获取显示流程信息
+	public function getConfirm($id = null)
+    {
+		$data =[];
+		$FlowConfig = model('FlowConfig');
+		$type = $FlowConfig->getConfig()['id'];
+		if ($id) {
+			$data = $this->data($id);
+		}
+        $flow = $FlowConfig->getFlow($type, $data, $id);
+		$flow_show  = implode(' -> ', $flow['flow_show']);
+        return $flow_show;
+    }
+
+	//流程新增操作
+	public function flowAdd($title, $type)
+	{
+        $data_flow = [
+			'title'   => $title,
+			'type'    => $type,
+			'user_id' => get_user_id(),
+			'step'    => 0,
+			'status'  => 0,
+			'is_del'  => 0,
+			'is_edit' => 1
+        ];
+        $Flow = model('Flow');
+        $Flow->data($data_flow);
+        $Flow->save();
+        $flow_id = $Flow->id;
+        if (!$flow_id) {
+            $this->error("提交失败-0001!请重试或联系管理员");
+        }else {
+        	return $flow_id;
+        }
+	}
+
+	//流程更新操作
+	public function flowUpdate($data)
+	{
+		$this->delLog($data['id']);
+	}
+
+	//审核下一步操作
+	public function nextStep($flow_id, $data = null)
+	{
+		$FlowConfig = model('FlowConfig');
+		$Flow       = model('Flow');
+		$flow_data  = $Flow->get($flow_id);
+		if (!$data) {
+			$data = $this->data($flow_id);
+		}
+		$cur_step = $flow_data['step'];
+		$flow     = $FlowConfig->getFlow($flow_data['type'], $data, $flow_data['id']);
+		$step     = $FlowConfig->getStep($cur_step, $flow['confirm_list']);
+		if (is_array($step) && $step[0] == 'last') {
+			//更新流程步骤
+			$flow          = $Flow->get($flow_id);
+			$flow->step    = $step[1]+1;
+			$flow->status  = 1;
+			$flow->is_edit = 0;
+			$flow->save();
+
+			//更新流程资料状态
+			if (!isset($model)) {
+				$flow_controller = $FlowConfig->where(['id'=>$flow_data['type']])->value('controller');
+				$model           = model(ucfirst($flow_controller));
+			}
+			$model->save(['status'=>1],['flow_id'=>$flow_id]);
+			//更新拓展库
+			if(method_exists($this, 'extChange')) {
+				$this->extChange($data);
+			}
+			//插入审核报告
+			$this->flowReport($flow_id, $flow_data['type']);
+			//邮件通知
+			$report_user = $FlowConfig->where(['id'=>$flow_data['type']])->value('report_user');
+			$this->send_mail(2, $flow_id, $flow_data['user_id']);
+			$this->send_mail(2, $flow_id, $report_user);
+			$this->send_weixin(2, $flow_id, $flow_data['user_id']);
+			$this->send_weixin(2, $flow_id, $report_user);
+
+		}else{
+			$user_id  = $flow['confirm_list'][$step]['id'];
+			$step     = $step+1;
+			$data_log = [
+				'flow_id' => $flow_id,
+				'user_id' => $user_id,
+				'step'    => $step,
+				'is_del'  => 0
+			];
+			$FlowLog = model('FlowLog');
+			$FlowLog->data($data_log);
+			$FlowLog->save();
+
+			//更新流程步骤
+			$flow = $Flow->get($flow_id);
+			$flow->step = $step;
+			$flow->save();
+
+			//邮件通知
+			$this->send_mail(1, $flow_id, $user_id);
+			$this->send_weixin(1, $flow_id, $user_id);
+		}
+	}
+
+	//审核日志标记位操作
+	public function delLog($flow_id)
+	{
+		//更新审核日志表
+		$FlowLog = model('FlowLog');
+		$where = [
+			'flow_id' => $flow_id,
+			'result' => ['exp', 'is null']
+		];
+		$FlowLog->where($where)->update(['is_del' => 1]);
+
+		//更新流程表
+		$Flow = model('Flow');
+		$Flow->where(['id'=>$flow_id])->update(['step' => 0, 'status'=> 0]);
+	}
+
+	//审核流程同意操作
+	public function agree()
+	{
+		$id       = input('post.id');
+		$comments = input('post.comment/a');
+		if (count($comments) == 1 && empty($comments[0])) {
+			$comments[0] = '同意';
+		}
+		if (!$id) {
+			$this->error('缺少参数(id)！');
+		}
+		$comment_check = $this->checkComment($id,$comments);
+		if ($comment_check !== true) {
+			$this->error($comment_check);
+		}
+		$comment = implode('|', $comments);
+		$Flow             = model('Flow');
+		$where            = ['flow_id' => $id, 'user_id'=>get_user_id(), 'is_del'=>0];
+		$FlowLog          = model('FlowLog')->where($where)->where('result is null')->find();
+		$FlowLog->comment = $comment;
+		$FlowLog->result  = 1;
+		$result           = $FlowLog->save();
+		$Flow->update(['id' => $id, 'is_edit' => 0]);
+		$this->nextStep($id);
+		if (false !== $result) {
+			$this->success('审核成功!', '/flow/confirm');
+		}else {
+            $this->error('审核失败!');
+        }
+	}
+
+	//审核流程拒绝操作
+	public function reject()
+	{
+		$id      = input('post.id');
+		$comments = input('post.comment/a');
+		if (count($comments) == 1 && empty($comments[0])) {
+			$comments[0] = '拒绝';
+		}
+		if (!$id) {
+			$this->error('缺少参数(id)！');
+		}
+		$comment_check = $this->checkComment($id,$comments);
+		if ($comment_check !== true) {
+			$this->error($comment_check);
+		}
+		$comment          = implode('|', $comments);
+		$Flow             = model('Flow');
+		$where            = ['flow_id' => $id, 'user_id'=>get_user_id(), 'is_del'=>0];
+		$FlowLog          = model('FlowLog')->where($where)->where('result is null')->find();
+		$FlowLog->comment = $comment;
+		$FlowLog->result  = 0;
+		$result           = $FlowLog->save();
+		$Flow->update(['id' => $id, 'is_edit' => 0, 'status'=>2]);
+		//更新流程资料状态
+		$flow_data         = model('Flow')->where(['id'=>$id])->field('type, user_id')->find();
+		$flow_controller   = model('FlowConfig')->where(['id'=>$flow_data['type']])->value('controller');
+		$model             = model(ucfirst($flow_controller));
+		$model->save(['status'=>2],['flow_id'=>$id]);
+		//邮件通知
+		$this->send_mail(3, $id, $flow_data['user_id']);
+		$this->send_weixin(3, $id, $flow_data['user_id']);
+		if (false !== $result) {
+			$this->success('审核成功!', '/flow/confirm');
+		}else {
+            $this->error('审核失败!');
+        }
+	}
+
+	//审核流程回退操作
+	public function reconfirm()
+	{
+		$id      = input('post.id');
+		$restep  = input('post.restep');
+		$comments = input('post.comment/a');
+		if (!$id) {
+			$this->error('缺少参数(id)！');
+		}
+		if (count($comments) == 1 && empty($comments[0])) {
+			$comments[0] = '回退';
+		}
+		$comment_check = $this->checkComment($id,$comments);
+		if ($comment_check !== true) {
+			$this->error($comment_check);
+		}
+		$comment 		  = implode('|', $comments);
+		$Flow             = model('Flow');
+		$where            = ['flow_id'=>$id, 'user_id'=>get_user_id(), 'is_del'=>0];
+		$FlowLog          = model('FlowLog')->where($where)->where('result is null')->find();
+		$FlowLog->comment = $comment;
+		$FlowLog->result  = 3;
+		$result           = $FlowLog->save();
+		$data             = ['id' => $id, 'status'=>3, 'step'=>$restep];
+		$restep           == 0 && $data['is_edit'] = 1;
+		$Flow->update($data);
+		//邮件通知
+		if ($restep == 0 ) {
+			$user_id = $Flow->where(['id' => $id])->value('user_id');
+			$this->send_mail(4, $id, $user_id);
+			$this->send_weixin(4, $id, $user_id);
+		}
+		if (false !== $result) {
+			$this->success('审核成功!', '/flow/confirm');
+		}else {
+            $this->error('审核失败!');
+        }
+	}
+
+	//审核流程存疑操作
+	public function doubt()
+	{
+		$id       = input('post.id');
+		$comments = input('post.comment/a');
+		if (count($comments) == 1 && empty($comments[0])) {
+			$comments[0] = '存在疑问';
+		}
+		if (!$id) {
+			$this->error('缺少参数(id)！');
+		}
+		$comment_check = $this->checkComment($id,$comments);
+		if ($comment_check !== true) {
+			$this->error($comment_check);
+		}
+		$comment = implode('|', $comments);
+		$Flow             = model('Flow');
+		$where            = ['flow_id' => $id, 'user_id'=>get_user_id(), 'is_del'=>0];
+		$FlowLog          = model('FlowLog')->where($where)->where('result is null')->find();
+		$FlowLog->comment = $comment;
+		$FlowLog->result  = 4;
+		$result           = $FlowLog->save();
+		$Flow->update(['id' => $id, 'is_edit' => 0]);
+		$this->nextStep($id);
+		if (false !== $result) {
+			$this->success('审核成功!', '/flow/confirm');
+		}else {
+            $this->error('审核失败!');
+        }
+	}
+
+	public function checkComment($id, $comments)
+	{
+		$comment_conf = model('FlowConfig')->getCommentConf($id);
+		$step = model('Flow')->where(['id'=>$id])->value('step');
+		if (isset($comment_conf[$step])) {
+			foreach ($comment_conf[$step] as $key => $conf) {
+				if ($conf['require'] && empty($comments[$key])) {
+					return $conf['comment'] . '不能为空';
+				}
+			}
+		}
+		return true;
+	}
+
+	public function getUrl($type)
+	{
+		$controller = $this->request->controller();
+		switch ($type) {
+			case 'apply':
+				$urls = [
+					'submit' => url($controller . '/flowSave')
+				];
+				break;
+			case 'confirm':
+				$urls = [
+					'agree'     => url($controller . '/agree'),
+					'reject'    => url($controller . '/reject'),
+					'reconfirm' => url($controller . '/reconfirm'),
+					'doubt'     => url($controller . '/doubt')
+				];
+				break;
+			default:
+				break;
+		}
+
+		return $urls;
+	}
+
+	public function pandect()
+	{
+		$plugin = ['date', 'table'];
+
+		$param = input('param.');
+        $param['start_time'] = input('param.start_time');
+        $param['end_time'] = input('param.end_time');
+        $where = $this->getWhere($param);
+        ($param['start_time'] && $param['end_time']) && $where['create_time'] = ['between', [strtotime($param['start_time']), strtotime($param['end_time'])+86400]];
+        ($param['start_time'] && !$param['end_time']) && $where['create_time'] = ['>=', strtotime($param['start_time'])];
+        (!$param['start_time'] && $param['end_time']) && $where['create_time'] = ['<=', strtotime($param['end_time'])+86400];
+
+		$Flow  = model('Flow');
+		$datas = $Flow->where($where)->order('create_time desc')->paginate(15);
+		$list = [];
+		foreach ($datas as $data) {
+			$data   = $this->getFlowData($data, 'read');
+			$data['project_id'] = get_project_id($data['user_id']);
+            $data['duty_id'] = get_duty_id($data['user_id']);
+			$list[] = $data;
+		}
+		$conf_list = $this->getConfList();
+
+		return $this->fetch('pandect', ['list' => $list, 'plugin' => $plugin, 'conf_list' => $this->getConfList(), 'paginate'=>$datas->render(), 'param'=>$param]);
+	}
+
+	public function flowReport($flow_id, $flow_type)
+	{
+		$report_user = model('FlowConfig')->where(['id' => $flow_type])->value('report_user');
+		$data = [
+			'flow_id' => $flow_id,
+			'uid' => $report_user,
+			'type' => $flow_type
+		];
+
+		model('FlowReport')->save($data);
+	}
+
+	public function report()
+	{
+		$plugin = ['table'];
+		$list = [];
+        $where = ['uid' => get_user_id()];
+		$report_list = model('FlowReport')->where($where)->column('flow_id');
+		if ($report_list) {
+			$map = ['id'=>['in', $report_list]];
+			$datas = model('Flow')->where($map)->field('id, title, type, step, status, create_time')->order('create_time desc')->paginate(15);
+			foreach ($datas as $data) {
+				$data   = $this->getFlowData($data, 'read');
+				$list[] = $data;
+			}
+			$this->assign('paginate',$datas->render());
+		}
+		return $this->fetch('report', ['list' => $list, 'plugin'=>$plugin]);
+	}
+
+	//邮件通知发送
+	public function send_mail($type, $flow_id, $user_id = null, $content = ''){
+		$flow_info = model('Flow')->field('title, user_id')->where(['id'=>$flow_id])->find();
+		$user_id = isset($user_id) ? $user_id : $flow_info['user_id'];
+		$url = 'http://'.$_SERVER["SERVER_NAME"];
+		switch ($type) {
+			case 1:
+				$msg_title   = '流程审批[待审核]';
+				$msg_contnet = '您好,有一条流程['.$flow_info["title"].']麻烦您审核.  链接：<a href="'.$url.'">跳到OA</a>';
+				break;
+
+			case 2:
+				$msg_title   = '流程报告[通过]';
+				$msg_contnet = '您好,有一条流程['.$flow_info["title"].']已通过审核.  链接：<a href="'.$url.'">跳到OA</a>';
+				break;
+
+			case 3:
+				$msg_title   = '流程审批[拒绝]';
+				$msg_contnet = '您好,有一条流程['.$flow_info["title"].']被拒绝.  链接：<a href="'.$url.'">跳到OA</a>';
+				break;
+			case 4:
+				$msg_title   = '流程审批[回退]';
+				$msg_contnet = '您好,有一条流程['.$flow_info["title"].']被回退至发起申请，请修改后重新提交.  链接：<a href="'.$url.'">跳到OA</a>';
+				break;
+
+			case 5:
+				$msg_title   = '流程审批[撤销]';
+				$msg_contnet = '您好,有一条流程['.$flow_info["title"].']被撤销并回退至发起申请，请修改后重新提交. 撤销理由：'.$content.' 链接：<a href="'.$url.'">跳到OA</a>';
+				break;
+
+			default:
+				# code...
+				break;
+		}
+		$email = get_user_email($user_id);
+		$data = [
+			'title'       => $msg_title,
+			'content'     => $msg_contnet,
+			'address'     => $email,
+			'is_send'     => 0
+		];
+		model('Email')->save($data);
+	}
+
+	public function send_weixin($type, $flow_id, $user_id = null, $content = ''){
+		Config::load(CONF_PATH.'weixin.php');
+		$flow_info    = model('Flow')->field('title, user_id, type')->where(['id'=>$flow_id])->find();
+		$user_id      = isset($user_id) ? $user_id : $flow_info['user_id'];
+		$url          = 'http://'.$_SERVER["SERVER_NAME"];
+		$agent_id     = 26;
+		$msg_type     = 'news';
+		$weixin_id    = get_account_name($user_id);
+		$sign['u']    = $weixin_id;
+		$sign['t']    = time();
+		ksort($sign);
+		$sign['sign'] = md5(http_build_query($sign) . config('auth_key'));
+		$controller   = model('FlowConfig')->where(['id'=>$flow_info['type']])->value('controller');
+		$sign_str     = http_build_query($sign);
+		switch ($type) {
+			case 1:
+				$params = [
+					'title'       => '流程审批[待审核]',
+					'description' => '您好,有一条流程['.$flow_info["title"].']麻烦您审核. 点击本消息跳转至OA。',
+					'url'         => "{$url}/{$controller}/confirmRead/id/{$flow_id}/view/weixin?{$sign_str}",
+					'picurl'      => '',
+					'agentid'     => $agent_id
+				];
+				break;
+
+			case 2:
+				$params = array(
+					'title'       => '流程报告[通过]',
+					'description' => '您好,有一条流程['.$flow_info["title"].']已通过审核. 点击本消息跳转至OA。',
+					'url'         => "{$url}/{$controller}/read/id/{$flow_id}/view/weixin?{$sign_str}",
+					'picurl'      => '',
+					'agentid'     => $agent_id,
+					);
+				break;
+
+			case 3:
+				$params = array(
+					'title'       => '流程审批[拒绝]',
+					'description' => '您好,有一条流程['.$flow_info["title"].']被拒绝. 点击本消息跳转至OA。',
+					'url'         => "{$url}/{$controller}/read/id/{$flow_id}/view/weixin?{$sign_str}",
+					'picurl'      => '',
+					'agentid'     => $agent_id,
+					);
+				break;
+			case 4:
+				$params = array(
+					'title'       => '流程审批[回退]',
+					'description' => '您好,有一条流程['.$flow_info["title"].']被回退至发起申请，请修改后重新提交. 点击本消息跳转至OA。',
+					'url'         => "{$url}/{$controller}/read/id/{$flow_id}/view/weixin?{$sign_str}",
+					'picurl'      => '',
+					'agentid'     => $agent_id,
+					);
+				break;
+
+			case 5:
+				$params = array(
+					'title'       => '流程审批[撤销]',
+					'description' => '您好,有一条流程['.$flow_info["title"].']被撤销并回退至发起申请，请修改后重新提交. 撤销理由：'.$content.' .点击本消息跳转至OA。',
+					'url'         => "{$url}/{$controller}/read/id/{$flow_id}?{$sign_str}",
+					'picurl'      => '',
+					'agentid'     => $agent_id,
+					);
+				break;
+
+			default:
+				# code...
+				break;
+		}
+
+		$data = array(
+			'weixin_id'   => json_encode([$weixin_id]),
+			'msg_type'    => $msg_type,
+			'msg_params'  => json_encode($params),
+			'is_send'     => 0,
+			'create_time' => time(),
+			'send_count'  => 0,
+			);
+		model('weixin')->save($data);
+	}
+}

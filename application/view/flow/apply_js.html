@@ -1,0 +1,53 @@
+<script>
+{if condition="($mode == 'add') OR ($mode == 'edit') "}
+function submit()
+{
+	var result = true;
+	if(typeof check_from == "function")
+  	{
+  		result = check_from();
+  	}
+  	if (result) {
+  		sendForm("apply_form", "{$urls.submit}", 1);
+  	}
+}
+{/if}
+{eq name="show.confirm" value="1"}
+function agree()
+{
+	var result = true;
+	if(typeof show_msg == "function")
+  	{
+  		result = show_msg();
+  	}
+  	if (result) {
+		sendForm("confirm_form", "{$urls.agree}", 1);
+	}
+}
+
+function doubt()
+{
+	var result = true;
+	if(typeof show_msg == "function")
+  	{
+  		result = show_msg();
+  	}
+  	if (result) {
+		sendForm("confirm_form", "{$urls.doubt}", 1);
+	}
+}
+
+function reject()
+{
+	sendForm("confirm_form", "{$urls.reject}", 1);
+}
+
+function reconfirm(restep)
+{
+	$('#confirm_form').find('input[name="restep"]').val(restep);
+	$('#confirm_form').find('input[name="restep"]').attr("disabled",false);
+	sendForm("confirm_form", "{$urls.reconfirm}", 1);
+	$('#confirm_form').find('input[name="restep"]').attr("disabled",true);
+}
+{/eq}
+</script>

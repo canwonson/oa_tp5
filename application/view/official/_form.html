@@ -1,0 +1,29 @@
+<div class="form-group">
+	<label class="control-label">入职日期</label>
+	<input type="text" class="form-control date-picker" name="entry_time" placeholder="入职日期" data-date-format="yyyy-mm-dd" value="{$data['entry_time']}" {notin name="mode" value="add,edit"}readonly{/notin}>
+</div>
+<div class="form-group">
+	<label class="control-label">考核日期</label>
+	<input type="text" class="form-control date-picker" name="assess_time" placeholder="考核日期" data-date-format="yyyy-mm-dd" value="{$data['assess_time']}" {notin name="mode" value="add,edit"}readonly{/notin}>
+</div>
+<div class="form-group">
+	<label for="probation_time">试用期（个月）</label>
+	<select name="probation_time" id="probation_time" class="form-control" {notin name="mode" value="add,edit"}readonly{/notin}>
+		{for start="0.5" end="6.5" step="0.5"}
+			<option value="{$i}" {eq name="$i" value="$data['probation_time']"}selected="selected"{/eq}>{$i}</option>
+		{/for}
+	</select>
+</div>
+<div class="form-group">
+	<label class="control-label">自我评价</label>
+	<textarea class="form-control" name="self_estimate" rows="5" {notin name="mode" value="add,edit"}readonly{/notin}>{$data['self_estimate']}</textarea>
+</div><div class="form-group">
+	<label class="control-label">个人规划</label>
+	<textarea class="form-control" name="self_plan" rows="5" {notin name="mode" value="add,edit"}readonly{/notin}>{$data['self_plan']}</textarea>
+</div><div class="form-group">
+	<label class="control-label">工作建议</label>
+	<textarea class="form-control" name="work_suggest" rows="5" {notin name="mode" value="add,edit"}readonly{/notin}>{$data['work_suggest']}</textarea>
+</div><div class="form-group">
+	<label class="control-label">对团队的评价</label>
+	<textarea class="form-control" name="team_appraise" rows="5" {notin name="mode" value="add,edit"}readonly{/notin}>{$data['team_appraise']}</textarea>
+</div>

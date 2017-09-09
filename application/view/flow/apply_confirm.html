@@ -1,0 +1,62 @@
+{eq name="show.confirm" value="1"}
+<div class="row">
+	<div class="col-sm-6">
+		<div class="box box-solid">
+			<div class="box-header with-border">
+				<i class="fa fa-legal"></i>
+				<h3 class="box-title"> 审核</h3>
+			</div>
+			<div class="box-body">
+				<div class="row">
+					<div class="col-sm-12">
+						<form id="confirm_form" role="form">
+							{foreach $comment_conf[$data['step']] as $comment}
+								<div class="form-group">
+									<label class="control-label">{$comment['comment']}</label>
+									<textarea class="form-control" name="comment[]" rows="5"></textarea>
+								</div>
+							{/foreach}
+							<div class="form-group">
+								<input type="hidden" name="id" value="{$data['id']}">
+								<input type="hidden" name="restep" value="" disabled>
+							</div>
+							<div class="form-group">
+								<div>
+									<a onclick="agree()" class="btn btn-success btn-flat">
+										<i class="fa fa-check"></i>
+										同意
+									</a>
+									<a onclick="reject()" class="btn btn-danger btn-flat">
+										<i class="fa fa-close"></i>
+										拒绝
+									</a>
+									<a onclick="doubt()" class="btn btn-primary btn-flat">
+										<i class="fa fa-exclamation"></i>
+										不建议
+									</a>
+									<div class="btn-group">
+										<button type="button" class="btn btn-warning dropdown-toggle" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
+											<span class="glyphicon glyphicon-repeat"></span> 退回 <span class="caret"></span>
+										</button>
+										<ul class="dropdown-menu">
+											{foreach $confirm_list as $step => $conf}
+												{if condition="$step < $data['step']"}
+													<li class="btn_reconfirm"><a href="javascript:;" onclick="reconfirm({$step});">流程{$step}: {$conf}</a></li>
+												{/if}
+											{/foreach}
+										</ul>
+									</div>
+									<a href="javascript:history.back(-1);" class="btn btn-default btn-flat" style="float:right">
+										<i class="fa fa-arrow-left"></i>
+										返 回
+									</a>
+								</div>
+							</div>
+						</form>
+					</div>
+				</div>
+			</div>
+		</div>
+	</div>
+</div>
+{/eq}

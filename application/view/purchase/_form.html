@@ -1,0 +1,55 @@
+{php}
+	$list = empty($data['param']) ? [1] : $data['param'];
+{/php}
+{foreach $list as $key => $param}
+	<div id="shopping_list">
+		<div class="panel panel-success detail">
+			<div class="panel-heading">购物清单<span id="list_id">{$key + 1}</span>: 
+				{if condition="($mode == 'add') OR ($mode == 'edit') "}
+					<div class="btn-group btn-group-sm" role="group">
+			  			<button type="button" class="btn btn-danger" onclick="add(this)">新 增</button>
+			  			<button type="button" class="btn btn-warning" onclick="del(this)">移 除</button>
+					</div>
+				{/if}
+			</div>
+		  	<div class="panel-body">
+		    	<div class="form-group">
+					<label class="control-label">物品名称</label>
+					<input type="text" class="form-control" name="item_name[]" placeholder="物品名称" value="{present name="param.item_name"}{$param.item_name}{/present}" {notin name="mode" value="add,edit"}readonly{/notin}>
+				</div>
+				<div class="form-group">
+					<label class="control-label">数量</label>
+					<input type="text" class="form-control" name="item_num[]" id="item_num" placeholder="数量" onchange="updateStat(1)" value="{present name="param.item_num"}{$param.item_num}{/present}" {notin name="mode" value="add,edit"}readonly{/notin}>
+				</div>
+				<div class="form-group">
+					<label class="control-label">价格</label>
+					<div class="input-group">
+						<span class="input-group-addon">
+					        <input name="is_tax[]" value="1" type="checkbox" {present name="param.is_tax"}{eq name="param.is_tax" value="1"}checked="checked"{/eq}{/present}> 含税
+					    </span>
+						<input type="text" class="form-control" name="item_price[]" id="item_price" placeholder="单价(元)" onchange="updateStat(1)" value="{present name="param.item_price"}{$param.item_price}{/present}" {notin name="mode" value="add,edit"}readonly{/notin}>
+					</div>
+				</div>
+				<div class="form-group">
+					<label class="control-label">购买渠道</label>
+					<input type="text" class="form-control" name="item_way[]" placeholder="购买渠道" value="{present name="param.item_way"}{$param.item_way}{/present}" {notin name="mode" value="add,edit"}readonly{/notin}>
+				</div>
+				<div class="form-group">
+					<label class="control-label">申请理由</label>
+					<input type="text" class="form-control" name="reason[]" placeholder="申请理由" value="{present name="param.reason"}{$param.reason}{/present}" {notin name="mode" value="add,edit"}readonly{/notin}>
+				</div>
+				<div class="form-group">
+					<label class="control-label">备注</label>
+					<input type="text" class="form-control" name="remark[]" placeholder="备注" value="{present name="param.remark"}{$param.remark}{/present}" {notin name="mode" value="add,edit"}readonly{/notin}>
+				</div>
+		  	</div>
+		</div>
+	</div>
+{/foreach}
+<hr>
+<label class="control-label">订单统计  种类数量:<span id="stat_count">0</span> 物品数量:<span id="stat_total">0</span> 总价格: <span id="stat_price">0</span>元 </label>
+<hr>
+<div class="form-group">
+	<input type="hidden" name="files_id" value="{present name='data.id'}{$data['id']}{else/}{$data['files_id']}{/present}">
+</div>
+

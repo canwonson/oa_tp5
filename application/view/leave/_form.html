@@ -1,0 +1,89 @@
+<div class="form-group">
+    <label class="control-label">请假开始时间*</label>
+    <input type="text" class="form-control date-picker" name="start_time" placeholder="请假开始时间" data-date-format="yyyy-mm-dd hh:ii" value="{$data['start_time']}" {notin name="mode" value="add,edit"}readonly{/notin}>
+</div>
+<div class="form-group">
+    <label class="control-label">请假结束时间*</label>
+    <input type="text" class="form-control date-picker" name="end_time" placeholder="请假结束时间" data-date-format="yyyy-mm-dd hh:ii" value="{$data['end_time']}" {notin name="mode" value="add,edit"}readonly{/notin}>
+</div>
+<div class="form-group">
+    <label class="control-label">请假天数*(大于3.5小时为请假1天，小于3.5小时为请假0.5天)</label>
+    <input type="text" class="form-control" name="leave_day" placeholder="请假天数(单位:0.5天)" value="{$data['leave_day']}" {notin name="mode" value="add,edit"}readonly{/notin} onchange="update_confirm()">
+</div>
+<div class="form-group">
+    <label class="control-label">请假类型*</label>
+    <select name="leave_type" id="leave_type" class="form-control" {notin name="mode" value="add,edit"}readonly{/notin} onchange="type_select(this.value)">
+        {foreach $config['param']['leave_type'] as $type => $name}
+            <option value="{$type}" {eq name="$type" value="$data['leave_type']"}selected="selected"{/eq}>{$name}</option>
+        {/foreach}
+    </select>
+</div>
+
+<fieldset class="ext_form overtime_ext" {neq name="$data.leave_type" value="4"}disabled="true" style="display: none;"{/neq}>
+    <div class="form-group">
+        <label class="control-label">加班数据*</label>
+        <table class="table table-hover table-condensed table-center table-bordered">
+            <thead>
+                <tr class="danger">
+                    <td>加班时间</td>
+                    <td>已用补休时间</td>
+                    <td>可用补休时间</td>
+                </tr>
+            </thead>
+            <tbody>
+                <tr>
+                {present name="data['overtime']"}
+                    <td>{$data['overtime']['available']}</td>
+                    <td>{$data['overtime']['used']}</td>
+                    <td>{$data['overtime']['available']-$data['overtime']['used']}</td>
+                {/present}
+                </tr>
+            </tbody>
+        </table>
+    </div>
+</fieldset>
+<fieldset class="ext_form annual_ext" {neq name="$data.leave_type" value="3"}disabled="true" style="display: none;"{/neq}>
+    <div class="form-group">
+        <label class="control-label">年假数据</label>
+        <table class="table table-hover table-condensed table-center table-bordered">
+            <thead>
+                <tr class="danger">
+                    <td colspan="4">每个年度用不完的年假会在下一年度的6月1日清零!</td>
+                </tr>
+                <tr>
+                    <td>年度</td>
+                    <td>总年假数</td>
+                    <td>已用年假数</td>
+                    <td>可用年假数</td>
+                </tr>
+
+            </thead>
+            <tbody>
+                {present name="data['annual']"}
+                    {foreach $data['annual'] as $annual}
+                        <tr >
+                            <td>{$annual['year']}</td>
+                            <td>{$annual['total_day']}</td>
+                            <td>{$annual['used_day']}</td>
+                            <td>{$annual['residue_day']}</td>
+                        </tr>
+                    {/foreach}
+                {/present}
+            </tbody>
+        </table>
+    </div>
+</fieldset>
+<fieldset class="ext_form other_type" {neq name="$data.leave_type" value="7"}disabled="true" style="display: none;"{/neq}>
+    <div class="form-group">
+        <label class="control-label">其他带薪假</label>
+        <input type="text" class="form-control" name="other_type" value="{$data['other_type']}" {notin name="mode" value="add,edit"}readonly{/notin}>
+    </div>
+</fieldset>
+
+<div class="form-group">
+    <label class="control-label">请假说明*</label>
+    <textarea class="form-control" name="describe" rows="5" {notin name="mode" value="add,edit"}readonly{/notin}>{$data['describe']}</textarea>
+</div>
+<div class="form-group">
+    <input type="hidden" name="files_id" value="{present name='data.id'}{$data['id']}{else/}{$data['files_id']}{/present}">
+</div>

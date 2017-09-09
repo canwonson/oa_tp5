@@ -1,0 +1,108 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="utf-8">
+<meta http-equiv="X-UA-Compatible" content="IE=edge">
+<meta name="renderer" content="webkit">
+<title>OA系统</title>
+{load href="/public/static/AdminLTE-2.3.6/bootstrap/css/bootstrap.min.css" /}
+{load href="/public/static/AdminLTE-2.3.6/plugins/jQuery/jquery-2.2.3.min.js"}
+{load href="/public/static/AdminLTE-2.3.6/dist/css/AdminLTE.min.css" /}
+{load href="/public/static/AdminLTE-2.3.6/dist/css/skins/_all-skins.min.css" /}
+{load href="/public/static/AdminLTE-2.3.6/plugins/bootstrap-wysihtml5/bootstrap3-wysihtml5.min.css" /}
+{load href="/public/static/css/style.css" /}
+{load href="/public/static/AdminLTE-2.3.6/plugins/iCheck/square/blue.css"}
+{load href="/public/static/plugins/toastr/build/toastr.css" /}
+</head>
+<body class="hold-transition login-page">
+<div class="login-box animated fadeInDown">
+    <div class="login-logo">
+        <a href="#"><b>OA</b>系统</a>
+    </div>
+    <!-- /.login-logo -->
+    <div class="login-box-body">
+        <form class="form-horizontal" id="form_login">
+            <div class="form-group has-feedback">
+                <label for="account" class="col-sm-3 control-label">账号</label>
+                <div class="col-sm-8">
+                    <input type="text" class="form-control" check="require" name="account" msg="账号不能为空" maxlength="32" placeholder="账号">
+                    <span class="glyphicon glyphicon-user form-control-feedback"></span>
+                </div>
+            </div>
+            <div class="form-group has-feedback">
+                <label for="password" class="col-sm-3 control-label">密码</label>
+                <div class="col-sm-8">
+                    <input type="password" class="form-control" check="require" name="password" msg="密码不能为空" maxlength="32" placeholder="密码">
+                    <span class="glyphicon glyphicon-warning-sign form-control-feedback"></span>
+                </div>
+            </div>
+            <!-- /.col -->
+            <div class="row">
+                <div class="col-sm-4 col-sm-offset-1">
+                    <div class="checkbox icheck">
+                        <label>
+                            <input type="checkbox" name="auto" id="auto" value="1"> 记住密码
+                        </label>
+                    </div>
+                </div>
+                <div class="col-sm-offset-1 col-sm-5">
+                    <button class="btn btn-primary btn-block btn-flat btn_login"/>登录</button>
+                </div>
+            </div>
+        </form>
+        <div class="row">
+            <div class="col-sm-10 col-sm-offset-1">
+                <br/>
+                <div class="alert alert-danger" role="alert" style="display:none"><i class="fa fa-exclamation-triangle"></i><span> </span></div>
+                <div class="alert alert-success" role="alert" style="display:none"><span></span></div>
+            </div>
+        </div>
+    <!-- /.social-auth-links -->
+    </div>
+  <!-- /.login-box-body -->
+</div>
+{load href="/public/static/AdminLTE-2.3.6/plugins/iCheck/icheck.min.js"}
+{load href="/public/static/js/common.js"}
+{load href="/public/static/plugins/toastr/toastr.js"}
+<script>
+var auto_account='{$Think.cookie.account}',auto_code='{$Think.cookie.code}';
+if(auto_account && auto_code){
+    var data={action:'auto',account:auto_account,code:auto_code};
+    $.ajax({
+        type : "POST",
+        url : "{:url('/login/check')}",
+        data : data,
+        datatype : "json",
+        beforeSend: function(){
+            $('.btn_submit').attr('disabled',true);
+        },
+        complete: function(msg){
+            $('.btn_submit').attr('disabled',false);
+        },
+        success : function(data) {
+            if (data.code) {
+                ui_success(data.msg);
+                if (data.url) {
+                    location.href = data.url;
+                }
+            } else {
+                ui_error(data.msg);
+            }
+        }
+    });
+}
+$(function () {
+    //iCheck
+    $("input[name='auto']").iCheck({
+        checkboxClass: "icheckbox_square-blue",
+        radioClass: "iradio_square-blue",
+        increaseArea: "20%" // optional
+    });
+    $('.btn_login').click(function(){
+        sendForm('form_login', "{:url('/login/check')}", 1);
+        return false;
+    });
+});
+
+</script>
+</html>

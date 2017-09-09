@@ -1,0 +1,74 @@
+{extend name="layout/main" /}
+{block name="ext_css"}
+  {load href="/static/AdminLTE-2.3.6/plugins/iCheck/square/blue.css"}
+{/block}
+{block name="content"}
+  <div class="row">
+    <div class="col-md-12">
+      <div class="box box-default">
+        <div class="box-header with-border">
+          <h3 class="box-title">流程组配置</h5>
+        </div>
+        <div class="box-body">
+          <div class="row">
+            <div class="col-md-12">
+              <div class="box-body">
+                <form method="post" id="form">
+                  <div class="box-body">
+					<div class="form-group">
+  					  <label for="">流程组名称</label>
+  					  <input class="form-control" type="text" name="name" value="{$data['name']}">
+  					</div>
+					<div class="form-group">
+					  <label for="">状态</label>
+					  <div class="input-group">
+					    <input name="status" id="status" value="1" type="radio" {eq name="data['status']" value="1"}checked="checked"{/eq}>
+					    <label for="status">启用</label>
+					    <input name="status" id="status" value="0" type="radio" {eq name="data['status']" value="0"}checked="checked"{/eq}>
+					    <label for="status">停用</label>
+					  </div>
+					</div>
+                    <div class="form-group">
+                        <input type="hidden" name="mode" value="{$mode}">
+						{eq name="mode" value="edit"}
+							<input type="hidden" name="id" value="{$data['id']}">
+						{/eq}
+                    </div>
+                  </div>
+                  <div class="box-footer clearfix">
+                    <a href="javascript:history.back(-1);" class="btn btn-default btn-flat">
+                        <i class="fa fa-arrow-left"></i>
+                        返 回
+                    </a>
+                    <a onclick="save()" class="btn btn-success btn-flat">
+                        <i class="fa fa-check"></i>
+                        保 存
+                    </a>
+                  </div>
+                </form>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+{/block}
+{block name="ext_js"}
+  {load href="/static/AdminLTE-2.3.6/plugins/iCheck/icheck.min.js"}
+  <script>
+    $(function () {
+      //iCheck
+      $("input").iCheck({
+        checkboxClass: "icheckbox_square-blue",
+        radioClass: "iradio_square-blue",
+        increaseArea: "20%" // optional
+      });
+    });
+
+    function save() {
+      sendForm("form", "{:url('/flow/classifySave')}", 1);
+      return false;
+    }
+  </script>
+{/block}

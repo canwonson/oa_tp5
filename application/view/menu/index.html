@@ -1,0 +1,116 @@
+{extend name="layout/main" /}
+{block name="ext_css"}
+{/block}
+{block name="content"}
+  <div class="row">
+    <div class="col-md-12">
+      <div class="box box-default">
+        <div class="box-header with-border">
+          <h3 class="box-title">菜单列表</h5>
+        </div>
+        <div class="box-body">
+          <div class="row">
+            <div class="col-md-12">
+              <div class="operate panel panel-default">
+                <div class="panel-body">
+                  <div class="pull-right">
+                    <a href="{:url('/menu/create')}" class="btn btn-sm btn-primary">新增</a>
+                  </div>
+                </div>
+              </div>
+              <table data-toggle="table">
+                <thead>
+                  <tr>
+                    <th>ID</th>
+                    <th>菜单名称</th>
+					<th>控制器</th>
+                    <th>方法</th>
+                    <th>菜单图标</th>
+                    <th>排序</th>
+                    <th>状态</th>
+                    <th>显示</th>
+                    <th>操作</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {foreach $datas as $data}
+                    <tr class="danger">
+                      <td>{$data['id']}</td>
+                        <td>{$data['name']}</td>
+						<td>{$data['controller']}</td>
+                        <td>{$data['action']}</td>
+                        <td><i class="fa {$data['icon']}"></i> {$data['icon']}</td>
+                        <td>{$data['sort']}</td>
+                        <td>
+                          <div class="checkbox-slider--b-flat center">
+                            <label>
+                              <input type="checkbox" onchange="switcher({$data['id']}, 'status', {$data['status'] ? 0 : 1})" {eq name="data['status']" value="1"}checked="checked"{/eq} ><span></span>
+                            </label>
+                          </div>
+                        </td>
+                        <td>
+                          <div class="checkbox-slider--b-flat center">
+                            <label>
+                              <input type="checkbox" onchange="switcher({$data['id']}, 'is_show', {$data['is_show'] ? 0 : 1})" {eq name="data['is_show']" value="1"}checked="checked"{/eq} ><span></span>
+                            </label>
+                          </div>
+                        </td>
+                        <td>
+                          <a class="btn btn-primary btn-xs" href="{:url('/menu/edit', ['id'=>$data.id])}">编辑</a> |
+                          <button class="btn btn-danger btn-xs" onclick="del({$data['id']})">删除</button>
+                        </td>
+                    </tr>
+                    {present name="data['menus']"}
+                      {foreach $data['menus'] as $menu}
+                        <tr>
+                          <td>{$menu['id']}</td>
+                          <td>{$menu['name']}</td>
+						  <td>{$menu['controller']}</td>
+                          <td>{$menu['action']}</td>
+                          <td><i class="fa {$menu['icon']}"></i> {$menu['icon']}</td>
+                          <td>{$menu['sort']}</td>
+                          <td>
+                            <div class="checkbox-slider--b-flat center">
+                              <label>
+                                <input type="checkbox" onchange="switcher({$menu['id']}, 'status', {$menu['status'] ? 0 : 1})" {eq name="menu['status']" value="1"}checked="checked"{/eq} ><span></span>
+                              </label>
+                            </div>
+                          </td>
+                          <td>
+                            <div class="checkbox-slider--b-flat center">
+                              <label>
+                                <input type="checkbox" onchange="switcher({$menu['id']}, 'is_show', {$menu['is_show'] ? 0 : 1})" {eq name="menu['is_show']" value="1"}checked="checked"{/eq} ><span></span>
+                              </label>
+                            </div>
+                          </td>
+                          <td>
+                            <a class="btn btn-primary btn-xs" href="{:url('/menu/edit', ['id'=>$menu.id])}">编辑</a> |
+                            <button class="btn btn-danger btn-xs" onclick="del({$menu['id']})">删除</button>
+                          </td>
+                        </tr>
+                      {/foreach}
+                    {/present}
+                  {/foreach}
+                </tbody>
+              </table>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+{/block}
+{block name="ext_js"}
+  <script>
+    function switcher(id, name, value) {
+      _switcher(id, name, value, "{:url('/menu/switcher')}");
+    }
+
+    function del(id) {
+        var msg = '确定要删除?';
+        var parame = {id:id};
+        var url = "{:url('/menu/destroy')}";
+        ui_confirm(msg, url, parame);
+    }
+  </script>
+{/block}

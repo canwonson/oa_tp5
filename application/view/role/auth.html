@@ -1,0 +1,85 @@
+{extend name="layout/main" /}
+{block name="ext_css"}
+  {load href="/public/static/AdminLTE-2.3.6/plugins/iCheck/square/blue.css"}
+{/block}
+{block name="content"}
+  <div class="row">
+    <div class="col-md-12">
+      <div class="box box-default">
+        <div class="box-header with-border">
+          <h3 class="box-title">权限配置</h5>
+        </div>
+        <div class="box-body">
+          <div class="row">
+            <div class="col-md-12">
+              <div class="box-body">
+                <form method="post" id="form_edit">
+                  <div class="box-body">
+                    <div class="form-group">
+                      <label class="col-sm-2">名称: </label>
+											<label class="text-success"><strong>{$data['name']}</strong></label>
+											<input type="hidden" name="id" value="{$data['id']}" />
+                    </div>
+										{foreach $role_menus as $module}
+											<div class="form-group">
+												<label class="col-sm-2 {eq name="module['status']" value="0"}text-muted{/eq}"> {$module['name']} <input type="checkbox" class="icheck mid" name="mid[]" value="{$module['id']}" {in name="$module['id']" value="$mids"}checked="checked"{/in}></label>
+												<div class="col-sm-10">
+                          {present name="module['menus']"}
+													{foreach $module['menus'] as $menu}
+														<label {eq name="menu['status']" value="0"}class="text-muted"{/eq}><input type="checkbox" class="icheck mid" name="mid[]" pid="{$menu['id']}" value="{$menu['id']}" {in name="$menu['id']" value="$mids"}checked="checked"{/in}/> {$menu['name']}</label>
+													{/foreach}
+                          {/present}
+												</div>
+											</div>
+										{/foreach}
+										<div class="form-group">
+											<label class="col-sm-2 text-success">全选 <input class="icheck" id="select_all" type="checkbox"></label>
+										</div>
+                  </div>
+                  <div class="box-footer clearfix">
+                    <a href="javascript:history.back(-1);" class="btn btn-default btn-flat">
+                        <i class="fa fa-arrow-left"></i>
+                        返 回
+                    </a>
+                    <a onclick="save()" class="btn btn-success btn-flat">
+                        <i class="fa fa-plus"></i>
+                        保 存
+                    </a>
+                  </div>
+                </form>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+{/block}
+{block name="ext_js"}
+  {load href="/public/static/AdminLTE-2.3.6/plugins/iCheck/icheck.min.js"}
+  <script>
+    $(function () {
+      //iCheck
+      $(".icheck").iCheck({
+        checkboxClass: "icheckbox_square-blue",
+        radioClass: "iradio_square-blue",
+        increaseArea: "20%" // optional
+      });
+    });
+
+    function save() {
+      sendForm("form_edit", "{:url('/role/auth_save')}", 0, 1);
+      return false;
+    }
+
+		$('#select_all').on('ifClicked', function(event){
+			var state = this.checked ? 'uncheck' : 'check';
+			$('.icheck').iCheck(state);
+			if(state == 'check'){
+				$('.mid').show();
+			}else{
+				$('.mid').hide();
+			}
+		});
+  </script>
+{/block}

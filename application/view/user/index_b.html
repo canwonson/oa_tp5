@@ -1,0 +1,261 @@
+{extend name="layout/main" /}
+{block name="ext_css"}
+  {load href="/static/plugins/jsTree/style.min.css" /}
+  {load href="/static/plugins/sweetalert/sweetalert.css" /}
+  {load href="/static/AdminLTE-2.3.6/plugins/bootstrap-datetimepicker/css/bootstrap-datetimepicker.min.css"}
+  {load href="/static/plugins/select2/select2.min.css" /}
+  {load href="/static/AdminLTE-2.3.6/plugins/iCheck/square/blue.css"}
+{/block}
+{block name="content"}
+  <div class="row">
+    <div class="col-md-8">
+      <div class="box box-default">
+        <div class="box-header with-border">
+          <h3 class="box-title">员工档案</h5>
+        </div>
+        <div class="box-body">
+          <div class="row">
+            <div class="col-md-12">
+              <div class="operate panel panel-default">
+                <div class="panel-body">
+                  <div class="pull-right">
+                    <button class="btn btn-sm btn-primary" onclick="create()">新增</button>
+                    <span id="edit_btn" style="display: none;">
+                      |
+                      <button class="btn btn-sm btn-success" onclick="input_mode()">编辑</button>
+                      <button class="btn btn-sm btn-danger">删除</button>
+                    </span>
+                  </div>
+                </div>
+              </div>
+              <form id="user_form" class="form-horizontal" role="form">
+                <input type="hidden" name="id" value="" disabled>
+                <input type="hidden" name="mode" value="">
+                <div class="form-group">
+                  <label for="name" class="col-sm-2 control-label">姓名</label>
+                  <div class="col-sm-3">
+                    <input type="text" class="form-control" id="name" name="name" placeholder="姓名" disabled>
+                  </div>
+                  <label for="account" class="col-sm-2 control-label">账号</label>
+                  <div class="col-sm-3">
+                    <input type="text" class="form-control" id="account" name="account" placeholder="账号" disabled>
+                  </div>
+                </div>
+                <div class="form-group">
+                  <label for="tel" class="col-sm-2 control-label">电话</label>
+                  <div class="col-sm-3">
+                    <input type="text" class="form-control" id="tel" name="tel" placeholder="电话" disabled>
+                  </div>
+                  <label for="email" class="col-sm-2 control-label">邮箱</label>
+                  <div class="col-sm-3">
+                    <input type="text" class="form-control" id="email" name="email" placeholder="邮箱" disabled>
+                  </div>
+                </div>
+                <div class="form-group">
+                  <label for="pro" class="col-sm-2 control-label">部门</label>
+                  <div class="col-sm-3">
+                    <select class="form-control" name="project_id" disabled>
+                      {foreach $conf_list['project_list'] as $project_id => $project}
+                        <option value="{$project_id}">{$project}</option>
+                      {/foreach}
+                    </select>
+                  </div>
+                  <label for="duty" class="col-sm-2 control-label">职能</label>
+                  <div class="col-sm-3">
+                    <select class="form-control" name="duty_id" disabled>
+                      {foreach $conf_list['duty_list'] as $duty_id => $duty}
+                        <option value="{$duty_id}">{$duty}</option>
+                      {/foreach}
+                    </select>
+                  </div>
+                </div>
+                <div class="form-group">
+                  <label for="pos" class="col-sm-2 control-label">职位</label>
+                  <div class="col-sm-3">
+                    <select class="form-control" name="position_id" disabled>
+                      {foreach $conf_list['position_list'] as $position_id => $position}
+                        <option value="{$position_id}">{$position}</option>
+                      {/foreach}
+                    </select>
+                  </div>
+                </div>
+                <div class="form-group">
+                  <label for="role" class="col-sm-2 control-label">角色</label>
+                  <div class="col-sm-8">
+                    <select class="form-control" multiple="multiple" id="role_select" name="roles[]" disabled>
+                      {foreach $conf_list['role_list'] as $role_id => $role}
+                        <option value="{$role_id}">{$role}</option>
+                      {/foreach}
+                    </select>
+                  </div>
+                </div>
+                <div class="form-group">
+                  <label for="entry_time" class="col-sm-2 control-label">入职时间</label>
+                  <div class="col-sm-3">
+                    <input type="text" class="form-control date-picker" id="entry_time" name="entry_time" placeholder="入职时间" disabled>
+                  </div>
+                  <label for="create_time" class="col-sm-2 control-label">创建时间</label>
+                  <div class="col-sm-3">
+                    <input type="text" class="form-control" id="create_time" name="create_time" placeholder="创建时间" disabled>
+                  </div>
+                </div>
+                <div class="form-group save_btn" style="display:none;">
+                  <div class="col-sm-2 col-sm-offset-2">
+                    <a onclick="save()" class="btn btn-success btn-flat">
+                      提 交
+                    </a>
+                  </div>
+                </div>
+              </form>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div class="col-md-4">
+      <div class="box box-default">
+        <div class="box-header with-border">
+          <h3 class="box-title">员工列表</h5>
+        </div>
+        <div class="box-body">
+          <div class="row">
+            <div class="col-md-12">
+              <div id="tree">
+                <ul>
+                  <li class="jstree-open">部门列表
+                  <ul>
+                    {foreach $datas as $project_id => $project}
+                      <li class="jstree-open">{$project_id|get_project_name}
+                        {foreach $project as $duty_id => $duty}
+                          <ul>
+                            <li class="jstree-open" data-jstree='{"type":"duty"}'>{$duty_id|get_duty_name}
+                              {foreach $duty as $user}
+                                <ul>
+                                  <li data-jstree='{"type":"user"}' onclick="getInfo({$user['id']})">{$user['name']}
+                                </ul>
+                              {/foreach}
+                            </li>
+                          </ul>
+                        {/foreach}
+                      </li>
+                    {/foreach}
+                  </ul>
+                </ul>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+{/block}
+{block name="ext_js"}
+  {load href="/static/plugins/jsTree/jstree.min.js"}
+  {load href="/static/plugins/sweetalert/sweetalert.min.js"}
+  {load href="/static/AdminLTE-2.3.6/plugins/bootstrap-datetimepicker/bootstrap-datetimepicker.js"}
+  {load href="/static/AdminLTE-2.3.6/plugins/bootstrap-datetimepicker/locales/bootstrap-datetimepicker.zh-CN.js"}
+  {load href="/static/AdminLTE-2.3.6/plugins/iCheck/icheck.min.js"}
+  {load href="/static/plugins/select2/select2.min.js"}
+  <script>
+
+    $(function () {
+      $("#tree").jstree(
+        {
+          "core": {"check_callback":true},
+          "plugins": ["types"],
+          "types": {
+            "default": {"icon":"fa fa-folder"},
+            "duty": {"icon":"fa fa-cubes"},
+            "user": {"icon":"fa fa-user"}
+          }
+        }
+      );
+
+      $(".date-picker").datetimepicker({
+        language:'zh-CN',
+        format: "yyyy-mm-dd",
+        autoclose: true,
+        todayBtn: true,
+      });
+
+      $("#project_select").select2();
+      $("#duty_select").select2();
+      $("#position_select").select2();
+      $("#role_select").select2({
+        placeholder: "选择角色",
+      });
+    });
+
+    function getInfo(id) {
+      $.get("{:url('/user/info')}",{id:id},function(data){
+        updateForm(data);
+        scroll(0,0);
+      });
+    }
+
+    function updateForm(data) {
+      cleanForm();
+      $("input[name='name']").val(data.name);
+      $("input[name='account']").val(data.account);
+      $("input[name='email']").val(data.email);
+      $("input[name='tel']").val(data.tel);
+      $("select[name='project_id']").find("option[value="+data.project_id+"]").prop('selected', true);
+      $("select[name='duty_id']").find("option[value="+data.duty_id+"]").prop('selected', true);
+      $("select[name='position_id']").find("option[value="+data.position_id+"]").prop('selected', true);
+      $("#role_select").val(data.role_id).trigger("change");
+      $("input[name='create_time']").val(data.create_time);
+      $("input[name='entry_time']").val(data.entry_time);
+      $("input[name='id']").prop('disabled', false);
+      $("input[name='id']").val(data.id);
+      $("input[name='mode']").val('edit');
+      uninput_mode();
+      $('#edit_btn').show();
+    }
+
+    function cleanForm() {
+      $("input[name='name']").val('');
+      $("input[name='account']").val('');
+      $("input[name='email']").val('');
+      $("input[name='tel']").val('');
+      $("input[name='create_time']").val('');
+      $("input[name='entry_time']").val('');
+      $("select[name='project_id']").find("option").prop('selected', false);
+      $("select[name='duty_id']").find("option").prop('selected', false);
+      $("select[name='position_id']").find("option").prop('selected', false);
+      $("#role_select").val(null).trigger("change");
+    }
+
+    function create() {
+      $('#edit_btn').hide();
+      input_mode();
+      cleanForm();
+      $("input[name='mode']").val('add');
+      $("input[name='id']").prop('disabled', true);
+    }
+
+    function uninput_mode() {
+      $("select").prop('disabled', true);
+      $("input").prop('disabled', true);
+      $(".save_btn").hide();
+    }
+
+    function input_mode() {
+      $("select").prop('disabled', false);
+      $("input").not('#create_time').prop('disabled', false);
+      $(".save_btn").show();
+    }
+
+    function save() {
+      sendForm("user_form", "{:url('/user/save')}", 1);
+      return false;
+    }
+
+    function del(id) {
+        var msg = '确定要删除?';
+        var parame = {id:id};
+        var url = "{:url('/menu/destroy')}";
+        ui_confirm(msg, url, parame);
+    }
+  </script>
+{/block}

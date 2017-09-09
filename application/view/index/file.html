@@ -1,0 +1,112 @@
+<div class="box-footer">
+	<form enctype="multipart/form-data" class="file_form">
+		<div class="form-group" class="file">
+			<label class="control-label"> 附件* </label><br/>
+			{if condition="($mode == 'add') OR ($mode == 'edit') "}
+			  	<div class="btn btn-default btn-file">
+			    	<i class="fa fa-paperclip"></i> 添加附件
+					<input type="file" name="file" onchange="upload(this)">
+					<input type="hidden" name="controller" value="flow">
+					<input type="hidden" name="files_id" value="{present name='data.id'}{$data['id']}{else/}{$data['files_id']}{/present}">
+			  	</div>
+			  	<p class="help-block">注意:上传附件仅支持1M以下!</p>
+			{/if}
+		</div>
+		<div class="img form-group {empty name='data.files'}hidden{/empty}">
+			<div>
+				<ul class="mailbox-attachments clearfix">
+				{empty name="$data['files']"}
+			    <li>
+			      	<span class="mailbox-attachment-icon has-img" style="height: 200px;"><img src="" alt="img"></span>
+			      	<div class="mailbox-attachment-info">
+			        	<a href="javascript:;" class="mailbox-attachment-name img-s" onclick="imgShow(this)" img-url=""><i class="fa fa-camera"></i> 查看</a>
+			        	{if condition="($mode == 'add') OR ($mode == 'edit') "}
+			        		 | <a href="javascript:;" class="mailbox-attachment-name img-d" onclick=""><i class="fa fa-trash"></i> 删除</a>
+			        	{/if}
+	            		<span class="mailbox-attachment-size img-t">
+			            </span>
+			      	</div>
+			    </li>
+				{/empty}
+				{foreach $data['files'] as $id => $file}
+				    <li>
+				      <span class="mailbox-attachment-icon has-img"><img src="{$file.file_url}" alt="img"></span>
+				      <div class="mailbox-attachment-info">
+			            <span class="mailbox-attachment-size img-t">
+			              {$file.file_name}
+			            </span>
+						<a href="javascript:;" class="mailbox-attachment-name img-s" onclick="imgShow(this)" img-url="{$file.file_url}"><i class="fa fa-camera"></i> 查看</a>
+						{if condition="($mode == 'add') OR ($mode == 'edit') "}
+							 | <a href="javascript:;" class="mailbox-attachment-name img-d" onclick="switcher({$id})"><i class="fa fa-trash"></i> 删除</a>
+				        {/if}
+				      </div>
+				    </li>
+				{/foreach}
+			  </ul>
+			</div>
+		</div>
+	</form>
+</div>
+
+<!-- Modal -->
+<div class="modal fade" id="myModal" tabindex="-1" role="dialog" aria-labelledby="myModalLabel">
+  <div class="modal-dialog modal-lg" role="document">
+    <div class="modal-content">
+      <div class="modal-header">
+        <button type="button" class="close" data-dismiss="modal" aria-label="Close"><span aria-hidden="true">&times;</span></button>
+      </div>
+      <div class="modal-body">
+        <img src="" alt="" style="max-width: 800px;">
+      </div>
+    </div>
+  </div>
+</div>
+
+<script>
+function upload(element) {
+	$(element).parents('.file_form').ajaxSubmit({
+		url:"{:url('/file/upload')}",
+    	type:"POST",
+		beforeSend: function(){
+			$('.btn_submit').attr('disabled',true);
+		},
+		complete: function(msg){
+			$('.btn_submit').attr('disabled',false);
+		},
+		success:function(info){
+			if(info.code == 1){
+				updateFile(info);
+			}else{
+				ui_error(info.info);
+			}
+		}
+	});
+}
+
+function switcher(id) {
+  	_switcher(id, 'is_del', 1, "{:url('/file/switcher')}");
+}
+
+function updateFile(info){
+	var last_li = $('.img ul li:last');
+	var last_src = last_li.find('img').attr('src');
+	if (last_src == '') {
+		$('.img').removeClass('hidden');
+	}else{
+		var clone_li = last_li.clone();
+		$('.img ul').append(clone_li);
+	}
+	last_li = $('.img ul li:last');
+	last_li.find('img').attr('src', info.url);
+	last_li.find('.img-s').attr('img-url', info.url);
+	last_li.find('.img-d').attr('onclick', "switcher(" + info.file_id + ")");
+	last_li.find('.img-t').html(info.file_name);
+
+}
+
+function imgShow(element) {
+	var url = $(element).attr('img-url');
+	$('#myModal img').attr('src', url);
+	$('#myModal').modal('toggle');
+}
+</script>
