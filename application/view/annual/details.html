@@ -24,6 +24,7 @@
                                         <th>年份</th>
                                         <th>总年假数</th>
                                         <th>已用年假</th>
+                                        <th>审核中的年假</th>
                                         <th>剩余年假</th>
                                         <th>状态</th>
                                     </tr>
@@ -34,6 +35,7 @@
                                             <td>{$value.year}</td>
                                             <td>{$value.total_day}</td>
                                             <td>{$value.used_day}</td>
+                                            <td>{$auditing_annual_log[$value.year]|default=0}</td>
                                             <td>{$value.residue_day}</td>
                                             <td>{$annual_status[$value.status]}</td>
                                         </tr>

@@ -17,11 +17,12 @@ class Official extends Flow
     public function index()
     {
         //页面插件
-        $plugin = ['date', 'table', 'flow_details'];
+        $plugin = ['date', 'table', 'flow_details','page'];
 
         $param = input('param.');
         $param['start_time'] = input('param.start_time', date('Y-m-01'));
         $param['end_time'] = input('param.end_time', date('Y-m-'.date('t')));
+        $param['page'] = input('param.page/d', 1);
         $where = $this->getWhere($param);
         ($param['start_time'] && $param['end_time']) && $where['create_time'] = ['between', [strtotime($param['start_time']), strtotime($param['end_time'])+86400]];
         ($param['start_time'] && !$param['end_time']) && $where['create_time'] = ['>=', strtotime($param['start_time'])];
@@ -41,8 +42,8 @@ class Official extends Flow
     {
         $param = input('param.');
         $where['flow_id'] = $param['flow_id'];
-        $datas = model('official')->field('self_estimate, self_plan, work_suggest, team_appraise')->where(['status'=>1])->where($where)->find();
-        return view('details', ['datas'=>$datas]);
+        $data = model('official')->field('self_estimate, self_plan, work_suggest, team_appraise')->where(['status'=>1])->where($where)->find();
+        return view('details', ['data'=>$data]);
     }
 
     public function data($flow_id = null)
@@ -79,5 +80,15 @@ class Official extends Flow
 
         $type == 1 && $save_data['flow_id'] = $data['flow_id'];
         return $save_data;
+    }
+
+    protected function extChange($data)
+    {
+        //更新用户状态
+        $info = [
+            'type' => 1,
+            'formal_time' => strtotime($data['assess_time'])
+        ];
+        db('user')->where(['id' => $data['user_id']])->update($info);
     }
 }

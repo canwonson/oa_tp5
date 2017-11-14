@@ -12,6 +12,28 @@ function submit()
   	}
 }
 {/if}
+
+{if condition="($mode == 'read') OR ($mode == 'edit') "}
+{eq name="able_repeal" value="1"}
+function repeal(id) {
+    var msg = '确定要撤销?';
+    var parame = {id:id};
+    var url = "{$urls.applyRepeal}";
+    ui_confirm(msg, url, parame);
+}
+{/eq}
+{/if}
+
+{if condition="($mode == 'read')"}
+{eq name="able_forced_repeal" value="1"}
+  function forcedRepeal(id) {
+    var msg = '此操作为直接撤销该流程,确定进行操作?';
+    var parame = {id:id};
+    var url = "{$urls.forcedRepeal}";
+    ui_confirm(msg, url, parame);
+  }
+{/eq}
+{/if}
 {eq name="show.confirm" value="1"}
 function agree()
 {

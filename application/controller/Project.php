@@ -11,7 +11,7 @@ class Project extends Base
         $datas = [];
         foreach ($list as $row) {
         	$row['cur_budget'] = db('budget', [], false)->where(['project_id'=>$row['id']])->sum('budget');
-        	$row['user_count'] = db('user', [], false)->where(['project_id'=>$row['id']])->count('id');
+        	$row['user_count'] = db('user', [], false)->where(['project_id'=>$row['id'], 'type' => ['in', [1, 2], 'is_del' => 0]])->count('id');
         	$datas[] = $row;
         }
         return $this->fetch('index',['datas'=>$datas, 'plugin'=>$plugin]);
@@ -21,17 +21,22 @@ class Project extends Base
     {
         set_url('/project/index');
     	$plugin = ['select2', 'icheck', 'icheck_radio'];
+        $cur_budget = db('budget', [], false)->where(['project_id'=>$id])->sum('budget');
+        $user_count = db('user', [], false)->where(['project_id'=>$id, 'type' => ['in', [1, 2], 'is_del' => 0]])->count('id');
 		$data=[
-			'name'      => '',
-            'budget'    => 0,
-			'status'    => 1,
-			'leader_id' => '',
+            'name'        => '',
+            'budget'      => 0,
+            'budget_user' => 0,
+            'status'      => 1,
+            'leader_id'   => '',
 		];
 		$mode = 'add';
 		if ($id) {
 			$data = model('Project')->get($id);
 			$mode = 'edit';
 		}
+        $data['cur_budget'] = $cur_budget;
+        $data['user_count'] = $user_count;
 
 		$users = model('user')->getUserList();
 
@@ -45,13 +50,15 @@ class Project extends Base
 		$datas   = [];
 
     	foreach ($dutys as $duty) {
-			$where['duty_id']    = $duty['id'];
-			$where['project_id'] = $id;
-			$where['status']     = 1;
-			$duty['user']        = db('user', [], false)->where($where)->column('name', 'id');
-			$duty['user_count']  = count($duty['user']);
-			$duty['budget']     = model('budget')->where(['project_id'=>$id, 'duty_id'=>$duty['id']])->value('budget');
-    		$datas[] = $duty;
+            $where['duty_id']    = $duty['id'];
+            $where['project_id'] = $id;
+            $where['status']     = 1;
+            $where['is_del']     = 0;
+            $where['type']       = ['in', [1,2]];
+            $duty['user']        = db('user', [], false)->where($where)->column('name', 'id');
+            $duty['user_count']  = count($duty['user']);
+            $duty['budget']      = model('budget')->where(['project_id'=>$id, 'duty_id'=>$duty['id']])->value('budget');
+            $datas[]             = $duty;
     	}
     	return $this->fetch('', ['datas'=>$datas, 'plugin'=>$plugin, 'project' => $id]);
     }

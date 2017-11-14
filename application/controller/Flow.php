@@ -6,7 +6,21 @@ use think\Config;
 
 class Flow extends Base
 {
-	private static $status = [0 => '审核中', 1 => '通过', 2 => '拒绝', 3 => '回退', 4 => '不建议'];
+	private static $status = [
+		0 => '审核中', 1 => '通过', 2 => '拒绝', 3 => '回退', 4 => '不建议', 5 => '请求撤销', 6 => '已撤销', 7 => '拒绝撤销'
+	];
+
+	//撤销申请配置
+	private static $repeal_conf = [
+		'type' => [1],//可撤销类型
+		'status' => [0, 1, 3, 4]//可撤销的状态
+	];
+
+	//流程文件配置
+	private static $file_flow = [
+		'Leave',
+		'Purchase'
+	];
 
 	private function checkAccess($flow_id, $action='read')
 	{
@@ -23,7 +37,7 @@ class Flow extends Base
 			}
 		}
 		if ($action == 'confirm') {
-			$count = model('FlowLog')->where($where)->where(['user_id'=>$user_id, 'is_del'=>0])->where('result is null')->count();
+			$count = model('FlowLog')->where($where)->where(['user_id'=>$user_id, 'is_del'=>0])->where('result is null or result=5')->count();
 			if ($count) {
 				return true;
 			}
@@ -225,6 +239,10 @@ class Flow extends Base
 		];
 		$confirm = $this->getConfirm();
 		$urls    = $this->getUrl('apply');
+		if (in_array('select2_user', $plugin)) {
+			$users = model('user')->getUserList();
+			$this->assign('users', $users);
+		}
 
         return $this->fetch('apply', ['data'=>$data, 'config'=>$config, 'mode'=>'add', 'show'=>$show, 'confirm'=>$confirm, 'plugin'=>$plugin, 'urls'=>$urls]);
     }
@@ -233,7 +251,7 @@ class Flow extends Base
     {
 		$request = request();
 		$controller = $request->controller();
-		$this -> _flow_save($controller);
+		$this->_flow_save($controller);
     }
 
 	public function _flow_save($name = null)
@@ -261,7 +279,7 @@ class Flow extends Base
 			            $this->ajaxError($save['msg']);
 			        }
 		        }
-                $this -> _details_insert($name, $data);
+                $this->_details_insert($name, $data);
                 break;
 
             case 'edit':
@@ -274,31 +292,31 @@ class Flow extends Base
 			            $this->ajaxError($save['msg']);
 			        }
 		        }
-                $this -> _details_update($name, $data);
+                $this->_details_update($name, $data);
                 break;
 
             default:
-               $this -> ajaxError("非法操作");
+               $this->ajaxError("非法操作");
         }
     }
 
     //插入数据
-	protected function _details_insert($name=null, $data, $filed=false)
+	protected function _details_insert($name = null, $data, $filed = false)
 	{
-        $save_data = $this->saveData($data);
-        $result = model($name)->save($save_data);
-        $file_save = ['Leave', 'Purchase'];
-        if (in_array($name, $file_save)) {
+		$save_data = $this->saveData($data);
+		$result    = model($name)->save($save_data);
+		if (false == $result) {
+			$this->ajaxError("数据库表{$name}写入数据错误");
+		}
+        if (in_array($name, self::$file_flow)) {
         	$img_result = controller('file')->update_id($data['files_id'], 'flow', $data['flow_id']);
-	        if ($img_result !== true) {
+	        if (true !== $img_result) {
 	            $this->ajaxError($img_result);
 	        }
         }
-        if ($result) {
-            $this->nextStep($data['flow_id'], $data);
+        $this->nextStep($data['flow_id']);
+        if (false !== $result) {
             $this->success("提交成功!", '/flow/submit');
-        } else {
-            $this->ajaxError("提交失败-0002!请重试或联系管理员");
         }
 	}
 
@@ -307,13 +325,15 @@ class Flow extends Base
     {
         $model = model($name);
         if (!isset($data['id'])) {
-            $this -> ajaxError('修改失败-0001!');
+            $this -> ajaxError('没有找到id');
         }
-		$this->flowUpdate($data);
-
+		$result = $this->flowUpdate($data);
+		if (false == $result) {
+			$this -> ajaxError('操作flowUpdate错误');
+		}
 		$save_data = $this->saveData($data, 0);
         //保存对象
-        $result = $model->save($save_data,['flow_id' => $data['id']]);
+        $result = $model->save($save_data, ['flow_id' => $data['id']]);
         if (false !== $result) {
             //成功提示
             $this->nextStep($data['id']);
@@ -327,13 +347,17 @@ class Flow extends Base
 	//已提交页面
 	public function submit()
 	{
-		$plugin = ['table'];
+		$plugin = ['sweetalert'];
 		$Flow  = model('Flow');
 		$where = ['user_id' => get_user_id(), 'is_del' => 0];
-		$datas = $Flow->where($where)->field('id, title, type, step, status, create_time')->order('create_time desc')->paginate(15);
+		$datas = $Flow->where($where)->field('id, title, type, step, status, create_time, flow_log')->order('create_time desc')->paginate(15);
 		$list = [];
 		foreach ($datas as $data) {
 			$data   = $this->getFlowData($data, 'read');
+			if (!empty($data['flow_log'])) {
+				$flow_log = explode('-', $data['flow_log']);
+				$data['step'] = end($flow_log);
+			}
 			$list[] = $data;
 		}
 		return $this->fetch('submit', ['list' => $list,'paginate'=>$datas->render(), 'plugin'=>$plugin]);
@@ -342,17 +366,21 @@ class Flow extends Base
 	//待审核页面
 	public function confirm()
 	{
-		$plugin = ['table'];
+		$plugin = [];
 		$FlowLog = model('FlowLog');
 		$Flow    = model('Flow');
-		$log_list = $FlowLog->where(['user_id' => get_user_id(), 'is_del' => 0])->where('result is null')->column('flow_id');
+		$log_list = $FlowLog->where(['user_id' => get_user_id(), 'is_del' => 0])->where('result is null or result = 5')->column('flow_id');
 		$list = [];
 		$paginate = '';
 		if ($log_list) {
 			$where = ['id' => ['in', $log_list], 'is_del' => 0];
-			$datas = $Flow->where($where)->field('id, title, type, step, status,create_time')->order('create_time desc')->paginate(15);
+			$datas = $Flow->where($where)->field('id, title, type, step, status, create_time, flow_log')->order('create_time desc')->paginate(15);
 			foreach ($datas as $data) {
 				$data   = $this->getFlowData($data, 'confirmRead');
+				if (!empty($data['flow_log'])) {
+					$flow_log = explode('-', $data['flow_log']);
+					$data['step'] = end($flow_log);
+				}
 				$list[] = $data;
 			}
 			$paginate = $datas->render();
@@ -360,15 +388,43 @@ class Flow extends Base
 		return $this->fetch('confirm', ['list'=>$list, 'paginate'=>$paginate, 'plugin'=>$plugin]);
 	}
 
+	//已审核页面
+	public function confirmed()
+	{
+		$plugin = [];
+		$FlowLog = model('FlowLog');
+		$Flow    = model('Flow');
+		$log_list = $FlowLog->where(['user_id' => get_user_id(), 'is_del' => 0])->where('result is not null and result != 5')->column('flow_id');
+		$list = [];
+		$paginate = '';
+		if ($log_list) {
+			$where = ['id' => ['in', $log_list], 'is_del' => 0];
+			$datas = $Flow->where($where)->field('id, title, type, step, status, create_time, flow_log')->order('create_time desc')->paginate(15);
+			foreach ($datas as $data) {
+				$data   = $this->getFlowData($data, 'read');
+				if (!empty($data['flow_log'])) {
+					$flow_log = explode('-', $data['flow_log']);
+					$data['step'] = end($flow_log);
+				}
+				$list[] = $data;
+			}
+			$paginate = $datas->render();
+		}
+		return $this->fetch('confirmed', ['list'=>$list, 'paginate'=>$paginate, 'plugin'=>$plugin]);
+	}
+
 	protected function getFlowData($flow_data, $action){
-		$FlowConfig          = model('FlowConfig');
-		$info                = $FlowConfig->where(['id' => $flow_data['type']])->field('name,controller')->find();
-		$data                = controller($info['controller'])->data($flow_data['id']);
-		$flow                = $FlowConfig->getFlow($flow_data['type'], $data, $flow_data['id']);
-		$flow_data['step']   = isset($flow['flow_name'][$flow_data['step']]) ? $flow['flow_name'][$flow_data['step']] : $flow_data['step'];
-		$flow_data['status'] = self::$status[$flow_data['status']];
-		$flow_data['type']   = $info['name'];
-		$flow_data['url']    = url('/' . $info['controller'] . '/' . $action,['id' => $flow_data['id']]);
+		$FlowConfig              = model('FlowConfig');
+		$info                    = $FlowConfig->where(['id' => $flow_data['type']])->field('name,controller')->find();
+		$data                    = controller($info['controller'])->data($flow_data['id']);
+		$flow                    = $FlowConfig->getFlow($flow_data['type'], $data, $flow_data['id']);
+		$flow_data['int_step']   = $flow_data['step'];
+		$flow_data['int_status'] = $flow_data['status'];
+		$flow_data['int_type']   = $flow_data['type'];
+		$flow_data['step']       = isset($flow['flow_name'][$flow_data['step']]) ? $flow['flow_name'][$flow_data['step']] : $flow_data['step'];
+		$flow_data['status']     = self::$status[$flow_data['status']];
+		$flow_data['type']       = $info['name'];
+		$flow_data['url']        = url('/' . $info['controller'] . '/' . $action,['id' => $flow_data['id']]);
 
 		return $flow_data;
 	}
@@ -399,12 +455,29 @@ class Flow extends Base
 		$flow_log           = $this->getFlowLog($id);
 		$urls               = $this->getUrl('apply');
 		$comment_conf       = $FlowConfig->getCommentConf($id);
-        return $this->fetch('apply', ['data'=>$data, 'config'=>$config, 'mode'=>$mode, 'show'=>$show, 'confirm'=>$confirm, 'flow_log'=>$flow_log, 'plugin'=>$plugin, 'urls'=>$urls, 'comment_conf'=>$comment_conf]);
+		$is_file            = false;
+		($flow['user_id'] == get_user_id()) && $is_file = true;
+		//是否可以撤销
+		$able_repeal = 0;
+		if (in_array($flow['type'], self::$repeal_conf['type']) && in_array($flow['status'], self::$repeal_conf['status']) && $flow_data['user_id'] == get_user_id()) {
+			$able_repeal = 1;
+		}
+		$able_forced_repeal = 0;
+		$manager = $this->checkAccredit('flow', 'pandect');
+		if ($manager) {
+			$able_forced_repeal = 1;
+		}
+		if (in_array('select2_user', $plugin)) {
+			$users = model('user')->getUserList();
+			$this->assign('users', $users);
+		}
+        return $this->fetch('apply', ['data'=>$data, 'config'=>$config, 'mode'=>$mode, 'show'=>$show, 'confirm'=>$confirm, 'flow_log'=>$flow_log, 'plugin'=>$plugin, 'urls'=>$urls, 'comment_conf'=>$comment_conf, 'able_repeal'=>$able_repeal, 'able_forced_repeal' => $able_forced_repeal, 'is_file' => $is_file]);
 	}
 
 	//流程审核查看页面
 	public function confirmRead($id)
 	{
+		set_url('/flow/confirm');
 		$check           = $this->checkAccess($id, 'confirm');
 		if (!$check) {
 			return $this->error("您没有此权限！");
@@ -415,11 +488,12 @@ class Flow extends Base
 		$config          = $FlowConfig->getConfig($flow['type']);
 		$config['param'] = $this->getParam();
 		$plugin          = $this->getPlugin();
-		$flow_info       = $Flow->where(['id' => $id])->field('step, title, type')->find();
+		$flow_info       = $Flow->where(['id' => $id])->field('step, title, type, status')->find();
         $data = [
-			'id'    => $id,
-			'step'  => $flow_info['step'],
-			'title' => $flow_info['title'],
+			'id'     => $id,
+			'step'   => $flow_info['step'],
+			'title'  => $flow_info['title'],
+			'status' => $flow_info['status']
         ];
 		$flow_data          = $this->data($id);
 		$flow_data && $data += $flow_data;
@@ -430,7 +504,12 @@ class Flow extends Base
 		$flow_log           = $this->getFlowLog($id);
 		$urls               = $this->getUrl('confirm');
 		$comment_conf       = $FlowConfig->getCommentConf($id);
-        return $this->fetch('apply', ['data'=>$data, 'config'=>$config, 'mode'=>$mode, 'show'=>$show, 'confirm'=>$confirm, 'flow_log'=>$flow_log, 'confirm_list'=>$confirm_list, 'plugin'=>$plugin, 'urls'=>$urls, 'comment_conf'=>$comment_conf]);
+		$is_file            = false;
+		if (in_array('select2_user', $plugin)) {
+			$users = model('user')->getUserList();
+			$this->assign('users', $users);
+		}
+        return $this->fetch('apply', ['data'=>$data, 'config'=>$config, 'mode'=>$mode, 'show'=>$show, 'confirm'=>$confirm, 'flow_log'=>$flow_log, 'confirm_list'=>$confirm_list, 'plugin'=>$plugin, 'urls'=>$urls, 'comment_conf'=>$comment_conf, 'is_file' => $is_file]);
 	}
 
 	//获取审核日志方法
@@ -439,10 +518,12 @@ class Flow extends Base
 		$where =[
 			'flow_id' => $id,
 			'is_del'  => 0,
-			'result'  => ['exp', 'is not null']
+			'result'  => ['exp', 'is not null and `result`!=5']
 		];
 		$data = db('flow_log')->where($where)->field('user_id, step, result, comment, update_time')->order('create_time asc')->select();
+
 		foreach ($data as &$value) {
+			$value['str_result'] = self::$status[$value['result']];
 			$value['comment'] = explode('|', $value['comment']);
 		}
 		return $data;
@@ -466,13 +547,14 @@ class Flow extends Base
 	public function flowAdd($title, $type)
 	{
         $data_flow = [
-			'title'   => $title,
-			'type'    => $type,
-			'user_id' => get_user_id(),
-			'step'    => 0,
-			'status'  => 0,
-			'is_del'  => 0,
-			'is_edit' => 1
+			'title'    => $title,
+			'type'     => $type,
+			'user_id'  => get_user_id(),
+			'step'     => 0,
+			'status'   => 0,
+			'is_del'   => 0,
+			'is_edit'  => 1,
+			'flow_log' => '发起申请',
         ];
         $Flow = model('Flow');
         $Flow->data($data_flow);
@@ -485,37 +567,29 @@ class Flow extends Base
         }
 	}
 
-	//流程更新操作
-	public function flowUpdate($data)
-	{
-		$this->delLog($data['id']);
-	}
-
 	//审核下一步操作
-	public function nextStep($flow_id, $data = null)
+	public function nextStep($flow_id)
 	{
 		$FlowConfig = model('FlowConfig');
 		$Flow       = model('Flow');
 		$flow_data  = $Flow->get($flow_id);
-		if (!$data) {
-			$data = $this->data($flow_id);
-		}
-		$cur_step = $flow_data['step'];
-		$flow     = $FlowConfig->getFlow($flow_data['type'], $data, $flow_data['id']);
-		$step     = $FlowConfig->getStep($cur_step, $flow['confirm_list']);
+		$data       = $this->data($flow_id);
+		$cur_step   = $flow_data['step'];
+		$flow_conf  = $FlowConfig->getFlow($flow_data['type'], $data, $flow_data['id']);
+		$step       = $FlowConfig->getStep($cur_step, $flow_conf['confirm_list']);
+
 		if (is_array($step) && $step[0] == 'last') {
 			//更新流程步骤
 			$flow          = $Flow->get($flow_id);
 			$flow->step    = $step[1]+1;
 			$flow->status  = 1;
 			$flow->is_edit = 0;
+			$flow->flow_log = $flow->flow_log . '-审核完成';
 			$flow->save();
 
 			//更新流程资料状态
-			if (!isset($model)) {
-				$flow_controller = $FlowConfig->where(['id'=>$flow_data['type']])->value('controller');
-				$model           = model(ucfirst($flow_controller));
-			}
+			$flow_controller = $FlowConfig->where(['id'=>$flow_data['type']])->value('controller');
+			$model           = model(ucfirst($flow_controller));
 			$model->save(['status'=>1],['flow_id'=>$flow_id]);
 			//更新拓展库
 			if(method_exists($this, 'extChange')) {
@@ -531,7 +605,7 @@ class Flow extends Base
 			$this->send_weixin(2, $flow_id, $report_user);
 
 		}else{
-			$user_id  = $flow['confirm_list'][$step]['id'];
+			$user_id  = $flow_conf['confirm_list'][$step]['id'];
 			$step     = $step+1;
 			$data_log = [
 				'flow_id' => $flow_id,
@@ -546,6 +620,7 @@ class Flow extends Base
 			//更新流程步骤
 			$flow = $Flow->get($flow_id);
 			$flow->step = $step;
+			$flow->flow_log = $flow->flow_log . "-" . $flow_conf['flow_show'][$step];
 			$flow->save();
 
 			//邮件通知
@@ -554,20 +629,69 @@ class Flow extends Base
 		}
 	}
 
+	//流程更新操作
+	public function flowUpdate($data)
+	{
+		$result = $this->delLog($data['id']);
+		if (false == $result) {
+			$this->ajaxError("操作delLog出现错误");
+		}
+		//更新流程表
+		$Flow   = model('Flow');
+		$result = $Flow->where(['id' => $data['id']])->update(['step' => 0, 'status'=> 0]);
+		if (false == $result) {
+			$this->ajaxError("操作flowUpdate更新流程表出现错误");
+		}
+
+		return true;
+	}
+
+	//待审核的flow_log对象
+	public function getConfirmFlowLogObject($flow_id, $list = false)
+	{
+		$where  = [
+			'flow_id' => $flow_id,
+			'is_del'  => 0,
+			'result'  => ['exp', 'is null or result=5']
+		];
+		!$list && $where['user_id'] = get_user_id();
+		$result = true;
+		$list   = $this->getFlowLogObject($where);
+
+		return $list;
+	}
+
+	//获取flow_log对象
+	public function getFlowLogObject($where)
+	{
+		$FlowLog = model('FlowLog')->where($where)->select();
+		return $FlowLog;
+	}
+
+	//审核日志更新操作
+	public function updateLog($obj_list, $data)
+	{
+		foreach ($obj_list as $row) {
+			$result = $row->save($data);
+			if (false == $result) {
+				$this->error('操作:updateLog更新数据错误');
+			}
+		}
+
+		return $result;
+	}
+
 	//审核日志标记位操作
 	public function delLog($flow_id)
 	{
-		//更新审核日志表
-		$FlowLog = model('FlowLog');
-		$where = [
-			'flow_id' => $flow_id,
-			'result' => ['exp', 'is null']
-		];
-		$FlowLog->where($where)->update(['is_del' => 1]);
-
-		//更新流程表
-		$Flow = model('Flow');
-		$Flow->where(['id'=>$flow_id])->update(['step' => 0, 'status'=> 0]);
+		$obj_list = $this->getConfirmFlowLogObject($flow_id, true);
+		if (!empty($obj_list)) {
+			$result = $this->updateLog($obj_list, ['is_del' => 1]);
+			if (false == $result) {
+				$this->error("操作:updateLog失败");
+			}
+		}
+		return true;
 	}
 
 	//审核流程同意操作
@@ -585,15 +709,25 @@ class Flow extends Base
 		if ($comment_check !== true) {
 			$this->error($comment_check);
 		}
-		$comment = implode('|', $comments);
-		$Flow             = model('Flow');
-		$where            = ['flow_id' => $id, 'user_id'=>get_user_id(), 'is_del'=>0];
-		$FlowLog          = model('FlowLog')->where($where)->where('result is null')->find();
-		$FlowLog->comment = $comment;
-		$FlowLog->result  = 1;
-		$result           = $FlowLog->save();
-		$Flow->update(['id' => $id, 'is_edit' => 0]);
-		$this->nextStep($id);
+
+		$Flow   = model('Flow');
+		//流程当前状态
+		$status = $Flow->where(['id' => $id])->value('status');
+		if ($status == 5) {
+			$result = $this->_repeal($id);
+		}else{
+			$comment  = implode('|', $comments);
+			$obj_list = $this->getConfirmFlowLogObject($id);
+			if (!empty($obj_list)) {
+				$result = $this->updateLog($obj_list, ['result' => 1, 'comment' => $comment]);
+				if (false == $result) {
+					$this->error("操作:updateLog失败");
+				}
+			}
+
+			$Flow->update(['id' => $id, 'is_edit' => 0]);
+			$this->nextStep($id);
+		}
 		if (false !== $result) {
 			$this->success('审核成功!', '/flow/confirm');
 		}else {
@@ -617,21 +751,38 @@ class Flow extends Base
 			$this->error($comment_check);
 		}
 		$comment          = implode('|', $comments);
+		$flow_status      = 2;
 		$Flow             = model('Flow');
-		$where            = ['flow_id' => $id, 'user_id'=>get_user_id(), 'is_del'=>0];
-		$FlowLog          = model('FlowLog')->where($where)->where('result is null')->find();
-		$FlowLog->comment = $comment;
-		$FlowLog->result  = 0;
-		$result           = $FlowLog->save();
-		$Flow->update(['id' => $id, 'is_edit' => 0, 'status'=>2]);
+		//流程当前状态
+		$status = $Flow->where(['id' => $id])->value('status');
+		//请求撤销状态
+		if ($status == 5) {
+			$flow_status   = 7;
+			$comment = '拒绝撤销';
+		}
+		$obj_list = $this->getConfirmFlowLogObject($id);
+		if (!empty($obj_list)) {
+			$result = $this->updateLog($obj_list, ['result' => 0, 'comment' => $comment]);
+			if (false == $result) {
+				$this->error("操作:updateLog失败");
+			}
+		}
+		$Flow->update(['id' => $id, 'is_edit' => 0, 'status'=>$flow_status]);
 		//更新流程资料状态
 		$flow_data         = model('Flow')->where(['id'=>$id])->field('type, user_id')->find();
 		$flow_controller   = model('FlowConfig')->where(['id'=>$flow_data['type']])->value('controller');
 		$model             = model(ucfirst($flow_controller));
 		$model->save(['status'=>2],['flow_id'=>$id]);
-		//邮件通知
-		$this->send_mail(3, $id, $flow_data['user_id']);
-		$this->send_weixin(3, $id, $flow_data['user_id']);
+		if ($status !== 5) {
+			//更新拓展库
+			if(method_exists($this, 'extChange')) {
+				$data = $this->data($id);
+				$this->extChange($data, 2);
+			}
+			//邮件通知
+			$this->send_mail(3, $id, $flow_data['user_id']);
+			$this->send_weixin(3, $id, $flow_data['user_id']);
+		}
 		if (false !== $result) {
 			$this->success('审核成功!', '/flow/confirm');
 		}else {
@@ -684,7 +835,7 @@ class Flow extends Base
 		$id       = input('post.id');
 		$comments = input('post.comment/a');
 		if (count($comments) == 1 && empty($comments[0])) {
-			$comments[0] = '存在疑问';
+			$comments[0] = '不建议';
 		}
 		if (!$id) {
 			$this->error('缺少参数(id)！');
@@ -709,6 +860,103 @@ class Flow extends Base
         }
 	}
 
+	public function applyRepeal($id)
+	{
+		set_url('/flow/submit');
+		$flow_data = model('flow')->where(['id' => $id])->find();
+		if (!in_array($flow_data['type'], self::$repeal_conf['type'])) {
+			$this->error('该类型申请不能撤销!');
+		}
+		if (in_array($flow_data['status'], self::$repeal_conf['status'])) {
+			//判断是否审核中
+			if (in_array($flow_data['status'], [1])) {
+				//已通过的需申请
+				$result = model('flow')->where(['id' => $id])->update(['status' => 5]);
+				if (!$result) {
+					$this->error('flow表更新失败或已是申请审核状态');
+				}
+				//生成审核流水
+				//撤销人
+				$user_id   = model('FlowConfig')->where(['id'=>$flow_data['type']])->value('repeal_user');
+				$data_log = [
+					'flow_id' => $id,
+					'user_id' => $user_id,
+					'result'  => 5,
+					'step'    => 0,
+					'is_del'  => 0
+				];
+				$FlowLog = model('FlowLog');
+				$FlowLog->data($data_log);
+				$result = $FlowLog->save();
+				if ($result) {
+					$this->success('撤销申请已提交!');
+				}else {
+					$this->error('撤销申请提交失败');
+				}
+			}else {
+				$result = $this->_repeal($id);
+				if ($result) {
+					$this->success('撤销成功!', session('url'));
+				}else{
+					$this->success('撤销失败!');
+				}
+			}
+		}else {
+			$cur_status = self::$status[$flow_data['status']];
+			$this->error("当前状态为:{$cur_status},不能进行撤销操作");
+		}
+	}
+	//强制撤销
+	public function forcedRepeal($id)
+	{
+		$result = $this->_repeal($id);
+		if ($result) {
+			$this->success('撤销成功!', session('url'));
+		}else{
+			$this->success('撤销失败!');
+		}
+	}
+
+	public function _repeal($id)
+	{
+		$count = model('flow')->where(['id' => $id, 'status' => 6])->count();
+		if ($count) {
+			$this->error('此流程目前是已撤销状态,请勿重复操作!');
+		}
+		$result = model('flow')->where(['id' => $id])->update(['status' => 6, 'is_edit' => 0]);
+		if (!$result) {
+			$this->error('table flow update false');
+		}
+		//设置flow_log状态(审核中)
+		$confirm_log = model('FlowLog')->where(['flow_id' => $id,'is_del' => 0])->where('result is null or result=5')->find();
+		if ($confirm_log) {
+			if ($confirm_log['result'] == 5) {
+				$result          = model('FlowLog')->where(['flow_id' => $id,'is_del' => 0])->where('result=5')->update(['comment'=>'撤销','result'=>1]);
+			}elseif ($confirm_log['result'] == null) {
+				$result          = model('FlowLog')->where(['flow_id' => $id,'is_del' => 0])->where('result is null')->update(['comment'=>'撤销','is_del'=>1]);
+			}
+			if (!$result) {
+				$this->error('table flow_log update false');
+			}
+		}
+		//更新流程资料状态
+		$type            = model('flow')->where(['id' => $id])->value('type');
+		$flow_controller = model('FlowConfig')->where(['id'=>$type])->value('controller');
+		$model           = model(ucfirst($flow_controller));
+		$result = $model->save(['status'=>6],['flow_id'=>$id]);
+		if (!$result) {
+			$this->error('table '. $model .' update false');
+		}
+		//更新拓展库
+		if(method_exists($this, 'extChange')) {
+			$data = $this->data($id);
+			$this->extChange($data, 6);
+		}
+		if ($result) {
+			return true;
+		}
+	}
+
 	public function checkComment($id, $comments)
 	{
 		$comment_conf = model('FlowConfig')->getCommentConf($id);
@@ -729,7 +977,9 @@ class Flow extends Base
 		switch ($type) {
 			case 'apply':
 				$urls = [
-					'submit' => url($controller . '/flowSave')
+					'submit'       => url($controller . '/flowSave'),
+					'applyRepeal'       => url($controller . '/applyRepeal'),
+					'forcedRepeal' => url($controller . '/forcedRepeal'),
 				];
 				break;
 			case 'confirm':
@@ -749,11 +999,12 @@ class Flow extends Base
 
 	public function pandect()
 	{
-		$plugin = ['date', 'table'];
+		$plugin = ['date', 'page', 'sweetalert'];
 
 		$param = input('param.');
         $param['start_time'] = input('param.start_time');
         $param['end_time'] = input('param.end_time');
+        $param['page'] = input('param.page/d', 1);
         $where = $this->getWhere($param);
         ($param['start_time'] && $param['end_time']) && $where['create_time'] = ['between', [strtotime($param['start_time']), strtotime($param['end_time'])+86400]];
         ($param['start_time'] && !$param['end_time']) && $where['create_time'] = ['>=', strtotime($param['start_time'])];
@@ -766,11 +1017,16 @@ class Flow extends Base
 			$data   = $this->getFlowData($data, 'read');
 			$data['project_id'] = get_project_id($data['user_id']);
             $data['duty_id'] = get_duty_id($data['user_id']);
+            if (!empty($data['flow_log'])) {
+				$flow_log = explode('-', $data['flow_log']);
+				$data['step'] = end($flow_log);
+			}
 			$list[] = $data;
 		}
 		$conf_list = $this->getConfList();
+		$types = model('FlowConfig')->column('name','id');
 
-		return $this->fetch('pandect', ['list' => $list, 'plugin' => $plugin, 'conf_list' => $this->getConfList(), 'paginate'=>$datas->render(), 'param'=>$param]);
+		return $this->fetch('pandect', ['list' => $list, 'plugin' => $plugin, 'conf_list' => $this->getConfList(), 'paginate'=>$datas->render(), 'param'=>$param, 'types' => $types]);
 	}
 
 	public function flowReport($flow_id, $flow_type)
@@ -787,7 +1043,7 @@ class Flow extends Base
 
 	public function report()
 	{
-		$plugin = ['table'];
+		$plugin = [];
 		$list = [];
         $where = ['uid' => get_user_id()];
 		$report_list = model('FlowReport')->where($where)->column('flow_id');

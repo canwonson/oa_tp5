@@ -108,7 +108,7 @@ class Base extends Controller
 	public function badge_count_flow_todo()
 	{
 		$FlowLog = model('FlowLog');
-		$count = $FlowLog->where(['user_id' => get_user_id(), 'is_del' => 0])->where('result is null')->count('flow_id');
+		$count = $FlowLog->where(['user_id' => get_user_id(), 'is_del' => 0])->where('result is null or result = 5')->count('flow_id');
 		return $count;
 	}
 
@@ -186,17 +186,17 @@ class Base extends Controller
 	{
 		$model = model($name);
 		if (!isset($data['id'])) {
-			$this -> error('编辑失败-0001!');
+			$this -> error('更新失败-0001!');
 		}
 		$id = $data['id'];
 		//保存对象
 		$result = $model->allowField($filed)->save($data,['id' => $id]);
 		if (false !== $result) {
 			//成功提示
-			$this -> success('编辑成功!', session('url'));
+			$this -> success('更新成功!', session('url'));
 		} else {
 			//错误提示
-			$this -> error('编辑失败-0002!');
+			$this -> error('更新失败-0002!');
 		}
 	}
 
@@ -271,6 +271,10 @@ class Base extends Controller
 			}
 			$user_id = model('user')->where($map)->column('id');
 			$where['user_id'] = empty($user_id) ? ['in', -1] : ['in', $user_id];
+		}
+
+		if ((isset($param['type']) && !empty($param['type']))) {
+			$where['type'] = $param['type'];
 		}
 
 		return $where;

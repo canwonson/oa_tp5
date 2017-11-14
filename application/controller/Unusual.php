@@ -27,24 +27,23 @@ class Unusual extends Flow
         ($param['start_time'] && !$param['end_time']) && $where['unusual_time'] = ['>=', strtotime($param['start_time'])];
         (!$param['start_time'] && $param['end_time']) && $where['unusual_time'] = ['<=', strtotime($param['end_time'])+86400];
 
-        $count = $datas = model('unusual')->where(['status'=>1])->where($where)->count('distinct user_id');
-        $datas = model('unusual')->field('user_id, count(*) count')->where(['status'=>1])->where($where)->group('user_id')->paginate(15, $count);
+        $datas = model('unusual')->field('user_id, count(*) count')->where(['status'=>1])->where($where)->group('user_id')->select();
         foreach ($datas as &$data) {
             $data['project_id'] = get_project_id($data['user_id']);
             $data['duty_id'] = get_duty_id($data['user_id']);
         }
 
         $conf_list = $this->getConfList();
-        return $this->fetch('index', ['datas'=>$datas, 'plugin'=>$plugin, 'conf_list'=>$conf_list, 'param'=>$param, 'paginate'=>$datas->render()]);
+        return $this->fetch('index', ['datas'=>$datas, 'plugin'=>$plugin, 'conf_list'=>$conf_list, 'param'=>$param]);
     }
 
     public function details()
     {
         $param = input('param.');
         $where = $this->getWhere($param);
-        ($param['start_time'] && $param['end_time']) && $where['unusual_time'] = ['between', [strtotime($param['start_time']), strtotime($param['end_time'])]];
+        ($param['start_time'] && $param['end_time']) && $where['unusual_time'] = ['between', [strtotime($param['start_time']), strtotime($param['end_time']) + 86400]];
         ($param['start_time'] && !$param['end_time']) && $where['unusual_time'] = ['>=', strtotime($param['start_time'])];
-        (!$param['start_time'] && $param['end_time']) && $where['unusual_time'] = ['<=', strtotime($param['end_time'])];
+        (!$param['start_time'] && $param['end_time']) && $where['unusual_time'] = ['<=', strtotime($param['end_time']) + 86400];
         $datas = model('unusual')->where(['status'=>1])->where($where)->select();
         $unusual_type = $this->getParam()['unusual_type'];
         $sign_type = $this->getParam()['sign_type'];

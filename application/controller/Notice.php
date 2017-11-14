@@ -24,6 +24,15 @@ class Notice extends Base
         (!$param['start_time'] && $param['end_time']) && $where['create_time'] = ['<=', strtotime($param['end_time'])];
 
         $datas = model('notice')->where(['is_del'=>0])->where($where)->order('create_time desc')->paginate(15);
+        if (!$manager) {
+            foreach ($datas as $key => $data) {
+                if (empty($data['show'])) {
+                    unset($datas[$key]);
+                }elseif (!in_array(get_user_id(), $data['show'])) {
+                    unset($datas[$key]);
+                }
+            }
+        }
 
         //管理权限
     	return $this->fetch('index', ['plugin'=>$plugin, 'datas'=>$datas, 'param'=>$param, 'paginate'=>$datas->render(), 'manager'=>$manager, 'conf_status' => $conf_status]);
@@ -92,13 +101,18 @@ class Notice extends Base
     public function _send()
     {
         $data = input('post.');
-        $notice = model('notice')->where(['id'=> $data['id']])->find();
+        $notice = model('notice')->where(['id' => $data['id']])->find();
+        if (empty($data['show'])) {
+            $this->error('收件人不能为空','/notice/send/id' . $data['id']);
+        }
         //插入邮件列表
         foreach ($data['show'] as $user_id) {
             $mail_data = [
                 'title' => $notice['title'],
                 'content' => $notice['content'],
-                'address' => get_user_email($user_id)
+                'address' => get_user_email($user_id),
+                'create_time' => time(),
+                'update_time' => time()
             ];
             $result = db('email', [], false)->insert($mail_data);
             if (false == $result) {

@@ -24,6 +24,7 @@
                                         <th>入职时间</th>
                                         <th>总年假数</th>
                                         <th>已用年假</th>
+                                        <th>审核中年假</th>
                                         <th>剩余年假</th>
                                         <th>操作</th>
                                     </tr>
@@ -36,6 +37,7 @@
                                         	<td>{$data.entry_time}</td>
                                         	<td>{$data.info.total_day}</td>
                                         	<td>{$data.info.used_day}</td>
+                                            <td>{$data.info.auditing_day}</td>
                                         	<td>{$data.info.residue_day}</td>
                                         	<td>
                                         		<a class="btn btn-danger btn-xs" href="{:url('/annual/details', ['user_id'=>$data.user_id])}">详情/调整</a>

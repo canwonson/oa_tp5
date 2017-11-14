@@ -6,6 +6,14 @@
 				<i class="fa fa-check"></i>
 				提交
 			</a>
+			{eq name="mode" value="edit"}
+				{eq name="able_repeal" value="1"}
+				<a onclick="repeal('{$data.id}')" class="btn btn-danger btn-flat">
+					<i class="fa fa-close"></i>
+					撤销申请
+				</a>
+        		{/eq}
+        	{/eq}
 			<a href="javascript:history.back(-1);" class="btn btn-default btn-flat btn_submit" style="float:right">
 				<i class="fa fa-arrow-left"></i>
 				返 回
@@ -13,13 +21,25 @@
 		</div>
 	</div>
 	{elseif condition="($mode == 'read')"/}
-	<div class="form-group">
-		<div class="">
-			<a href="javascript:history.back(-1);" class="btn btn-default btn-flat" style="float:right">
-				<i class="fa fa-arrow-left"></i>
-				返 回
-			</a>
+		<div class="form-group">
+			<div class="">
+				{eq name="able_repeal" value="1"}
+					<a onclick="repeal('{$data.id}')" class="btn btn-danger btn-flat">
+						<i class="fa fa-close"></i>
+						撤销申请
+					</a>
+		        {/eq}
+		        {eq name="able_forced_repeal" value="1"}
+					<button onclick="forcedRepeal('{$data.id}')" class="btn btn-danger btn-flat">
+						<i class="fa fa-close"></i>
+						强制撤销
+					</button>
+		        {/eq}
+				<a href="javascript:history.back(-1);" class="btn btn-default btn-flat" style="float:right">
+					<i class="fa fa-arrow-left"></i>
+					返 回
+				</a>
+			</div>
 		</div>
-	</div>
 	{/if}
 </div>

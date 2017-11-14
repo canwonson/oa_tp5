@@ -24,7 +24,9 @@
 </div>
 <div class="form-group">
 	<label class="control-label">异动人员</label>
-	<input type="text" class="form-control" name="change_user_id" placeholder="异动人员" value="{$data['change_user_id']}" {notin name="mode" value="add,edit"}readonly{/notin}>
+	<div {notin name="mode" value="add,edit"}readonly{/notin}>
+		{include file="/index/select_user_single" name="change_user_id"/}
+	</div>
 </div>
 <div class="form-group">
 	<label class="control-label">异动时间</label>

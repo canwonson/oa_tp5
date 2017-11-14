@@ -7,9 +7,10 @@
 		</div>
 		<div class="box-body">
 			{foreach $flow_log as $row}
-				<div class="panel {eq name="row.result" value="1"}panel-success{/eq} {eq name="row.result" value="0"}panel-danger{/eq} {eq name="row.result" value="3"}panel-warning{/eq} {eq name="row.result" value="4"}panel-primary{/eq}">
-				  <div class="panel-heading">{$row['user_id']|get_user_name}||{$row['update_time']|date="Y-m-d H:i:s", ###}</div>
+				<div class="panel {eq name="row.result" value="1"}panel-success{/eq} {eq name="row.result" value="0"}panel-danger{/eq} {eq name="row.result" value="3"}panel-warning{/eq} {eq name="row.result" value="4"}panel-primary{/eq} {eq name="row.result" value="6"}panel-info{/eq}">
+				  <div class="panel-heading">{$row['user_id']|get_user_name}||{$row['update_time']|date="Y-m-d H:i:s", ###} || {$row['str_result']}</div>
 				  <div class="panel-body">
+				  	{present name="comment_conf[$row['step']]"}
 				  	{foreach $row['comment'] as $num => $comment}
 				  		{present name="comment_conf[$row['step']]"}
 							{eq name="comment_conf[$row['step']][$num]['show']" value="1"}
@@ -19,6 +20,11 @@
 							{/eq}
 				  		{/present}
 				  	{/foreach}
+				  	{else/}
+						<h4>意见:</h4>
+						<p>{$row['comment'][0]}</p>
+						<hr/>
+				  	{/present}
 				  </div>
 				</div>
 			{/foreach}

@@ -10,8 +10,15 @@ class User extends Common
 
     protected $type = [
         'entry_time' => 'timestamp:Y-m-d',
+        'leave_time' => 'timestamp:Y-m-d',
+        'formal_time' => 'timestamp:Y-m-d',
         'create_time' => 'timestamp',
     ];
+
+    public function setAccountAttr($value)
+    {
+        return trim($value);
+    }
 
     public function getUserList()
     {

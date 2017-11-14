@@ -2,42 +2,44 @@
 	<form enctype="multipart/form-data" class="file_form">
 		<div class="form-group" class="file">
 			<label class="control-label"> 附件* </label><br/>
-			{if condition="($mode == 'add') OR ($mode == 'edit') "}
+			{if condition="($mode == 'add') OR ($mode == 'edit') OR ($is_file == true)"}
 			  	<div class="btn btn-default btn-file">
 			    	<i class="fa fa-paperclip"></i> 添加附件
 					<input type="file" name="file" onchange="upload(this)">
 					<input type="hidden" name="controller" value="flow">
 					<input type="hidden" name="files_id" value="{present name='data.id'}{$data['id']}{else/}{$data['files_id']}{/present}">
 			  	</div>
-			  	<p class="help-block">注意:上传附件仅支持1M以下!</p>
+			  	<p class="help-block">注意:上传附件仅支持1M以下!仅支持jpg,png,xlsx后缀文件!</p>
 			{/if}
 		</div>
-		<div class="img form-group {empty name='data.files'}hidden{/empty}">
+		<div class="file-show form-group {empty name='data.files'}hidden{/empty}">
 			<div>
 				<ul class="mailbox-attachments clearfix">
 				{empty name="$data['files']"}
 			    <li>
-			      	<span class="mailbox-attachment-icon has-img" style="height: 200px;"><img src="" alt="img"></span>
+			    	<span class="mailbox-attachment-icon has-img"><img class="img-box" src="" alt="img"><i class="file-box fa fa-file hidden"></i></span>
 			      	<div class="mailbox-attachment-info">
-			        	<a href="javascript:;" class="mailbox-attachment-name img-s" onclick="imgShow(this)" img-url=""><i class="fa fa-camera"></i> 查看</a>
-			        	{if condition="($mode == 'add') OR ($mode == 'edit') "}
-			        		 | <a href="javascript:;" class="mailbox-attachment-name img-d" onclick=""><i class="fa fa-trash"></i> 删除</a>
+			        	<a href="javascript:;" class="mailbox-attachment-name file-s" onclick="imgShow(this)" img-url=""><i class="fa fa-camera"></i> 查看</a>
+			        	<a href="" class="mailbox-attachment-name file-down"><i class="fa fa-download"></i> 下载</a>
+			        	{if condition="($mode == 'add') OR ($mode == 'edit') OR ($is_file == true)"}
+			        		 | <a href="javascript:;" class="mailbox-attachment-name file-d" onclick=""><i class="fa fa-trash"></i> 删除</a>
 			        	{/if}
-	            		<span class="mailbox-attachment-size img-t">
+	            		<span class="mailbox-attachment-size file-t">
 			            </span>
 			      	</div>
 			    </li>
 				{/empty}
 				{foreach $data['files'] as $id => $file}
 				    <li>
-				      <span class="mailbox-attachment-icon has-img"><img src="{$file.file_url}" alt="img"></span>
-				      <div class="mailbox-attachment-info">
-			            <span class="mailbox-attachment-size img-t">
+				      	<span class="mailbox-attachment-icon has-img"><img class="img-box {notin name="file['ext']" value="jpg,png"}hidden{/notin}" src="{$file.file_url}" alt="img"><i class="file-box fa fa-file {notin name="file['ext']" value="xlsx,xls"}hidden{/notin}"></i></span>
+				      	<div class="mailbox-attachment-info">
+			            <span class="mailbox-attachment-size file-t">
 			              {$file.file_name}
 			            </span>
-						<a href="javascript:;" class="mailbox-attachment-name img-s" onclick="imgShow(this)" img-url="{$file.file_url}"><i class="fa fa-camera"></i> 查看</a>
-						{if condition="($mode == 'add') OR ($mode == 'edit') "}
-							 | <a href="javascript:;" class="mailbox-attachment-name img-d" onclick="switcher({$id})"><i class="fa fa-trash"></i> 删除</a>
+						<a href="javascript:;" class="mailbox-attachment-name file-s {notin name="file['ext']" value="jpg,png"}hidden{/notin}" onclick="imgShow(this)" img-url="{$file.file_url}"><i class="fa fa-camera"></i> 查看</a>
+						<a href="{$file.file_url}" class="mailbox-attachment-name file-down {notin name="file['ext']" value="xlsx,xls"}hidden{/notin}"><i class="fa fa-download"></i> 下载</a>
+						{if condition="($mode == 'add') OR ($mode == 'edit') OR ($is_file == true)"}
+							<a href="javascript:;" class="mailbox-attachment-name file-d" onclick="switcher({$id})"><i class="fa fa-trash"></i> 删除</a>
 				        {/if}
 				      </div>
 				    </li>
@@ -88,19 +90,33 @@ function switcher(id) {
 }
 
 function updateFile(info){
-	var last_li = $('.img ul li:last');
+	var last_li = $('.file-show ul li:last');
 	var last_src = last_li.find('img').attr('src');
+	var type = (info.ext == 'xlsx') || (info.ext == 'xls') ? 'file' : 'img';
+
 	if (last_src == '') {
-		$('.img').removeClass('hidden');
+		$('.file-show').removeClass('hidden');
 	}else{
 		var clone_li = last_li.clone();
-		$('.img ul').append(clone_li);
+		$('.file-show ul').append(clone_li);
 	}
-	last_li = $('.img ul li:last');
-	last_li.find('img').attr('src', info.url);
-	last_li.find('.img-s').attr('img-url', info.url);
-	last_li.find('.img-d').attr('onclick', "switcher(" + info.file_id + ")");
-	last_li.find('.img-t').html(info.file_name);
+	last_li = $('.file-show ul li:last');
+	if (type == 'file') {
+		last_li.find('.img-box').addClass('hidden');
+		last_li.find('.file-box').removeClass('hidden');
+		last_li.find('.file-down').attr('href', info.url);
+		last_li.find('.file-s').addClass('hidden');
+		last_li.find('.file-down').removeClass('hidden');
+	}else {
+		last_li.find('.img-box').removeClass('hidden');
+		last_li.find('.file-box').addClass('hidden');
+		last_li.find('img').attr('src', info.url);
+		last_li.find('.file-s').attr('img-url', info.url);
+		last_li.find('.file-s').removeClass('hidden');
+		last_li.find('.file-down').addClass('hidden');
+	}
+	last_li.find('.file-d').attr('onclick', "switcher(" + info.file_id + ")");
+	last_li.find('.file-t').html(info.file_name);
 
 }
 

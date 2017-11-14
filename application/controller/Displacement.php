@@ -12,17 +12,18 @@ class Displacement extends Flow
 
     public function getPlugin()
     {
-        return ['date_time'];
+        return ['date_time', 'select2', 'select2_user'];
     }
 
     public function index()
     {
         //页面插件
-        $plugin = ['date', 'table', 'flow_details'];
+        $plugin = ['date', 'table', 'flow_details', 'page'];
 
         $param = input('param.');
         $param['start_time'] = input('param.start_time', date('Y-m-01'));
         $param['end_time'] = input('param.end_time', date('Y-m-'.date('t')));
+        $param['page'] = input('param.page/d', 1);
         $where = $this->getWhere($param);
         ($param['start_time'] && $param['end_time']) && $where['create_time'] = ['between', [strtotime($param['start_time']), strtotime($param['end_time'])+86400]];
         ($param['start_time'] && !$param['end_time']) && $where['create_time'] = ['>=', strtotime($param['start_time'])];

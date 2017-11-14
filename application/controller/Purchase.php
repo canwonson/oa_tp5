@@ -18,15 +18,16 @@ class Purchase extends Flow
     public function index()
     {
         //页面插件
-        $plugin = ['date', 'table', 'flow_details'];
+        $plugin = ['date', 'table', 'flow_details', 'page'];
 
         $param = input('param.');
         $param['start_time'] = input('param.start_time', date('Y-m-01'));
         $param['end_time'] = input('param.end_time', date('Y-m-'.date('t')));
+        $param['page'] = input('param.page/d', 1);
         $where = $this->getWhere($param);
-        ($param['start_time'] && $param['end_time']) && $where['create_time'] = ['between', [strtotime($param['start_time']), strtotime($param['end_time'])]];
+        ($param['start_time'] && $param['end_time']) && $where['create_time'] = ['between', [strtotime($param['start_time']), strtotime($param['end_time'])+ 86400]];
         ($param['start_time'] && !$param['end_time']) && $where['create_time'] = ['>=', strtotime($param['start_time'])];
-        (!$param['start_time'] && $param['end_time']) && $where['create_time'] = ['<=', strtotime($param['end_time'])];
+        (!$param['start_time'] && $param['end_time']) && $where['create_time'] = ['<=', strtotime($param['end_time'])+ 86400];
 
         $datas = model('purchase')->where(['status'=>1])->where($where)->paginate(15);
         foreach ($datas as &$data) {
@@ -73,6 +74,9 @@ class Purchase extends Flow
             	$data['param'] = json_decode($data['param'], true);
 	            $files         = [];
 	            $files         = db('file')->where(['controller'=>'flow', 'controller_id'=>$flow_id, 'is_del'=>0])->column('file_url, file_name', 'id');
+                foreach ($files as &$file) {
+                $file['ext'] = explode(".", $file['file_name'])[1];
+            }
 				$data['files'] = $files;
                 foreach ($data['param'] as $param) {
                     $total_price += $param['item_num'] * $param['item_price'];

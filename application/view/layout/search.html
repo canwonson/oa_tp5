@@ -1,7 +1,7 @@
 {php}
 	$fields = explode(',', '[fields]');
 {/php}
-<form class="form-inline" method="post">
+<form class="form-inline form-search" method="post">
 	{foreach $fields as $field}
 		{switch name="field"}
 			{case value="user"}
@@ -54,6 +54,17 @@
 					</select>
 				</div>
 			{/case}
+			{case value="type"}
+				<div class="form-group">
+					<label for="type">类型</label>
+					<select name="type" id="type" class="form-control">
+						<option value="">-所有-</option>
+						{foreach $types as $id => $conf}
+							<option value="{$id}" {present name="param['type']"}{eq name="$id" value="$param['type']"}selected="selected"{/eq}{/present}>{$conf}</option>
+						{/foreach}}
+					</select>
+				</div>
+			{/case}
 			{case value="time"}
 				<div class="form-group">
 					<label class="control-label">开始时间*</label>
@@ -73,6 +84,29 @@
 					<label class="control-label">结束日期*</label>
 					<input type="text" class="form-control date-picker" name="end_time" placeholder="结束时间" data-date-format="yyyy-mm-dd" value="{present name="param['end_time']"}{$param['end_time']}{/present}"">
 				</div>
+			{/case}
+			{case value="entry_date"}
+				<div class="form-group">
+					<label class="control-label">入职时间*</label>
+					<input type="text" class="form-control date-picker" name="entry_start_time" placeholder="开始时间" data-date-format="yyyy-mm-dd" value="{present name="param['entry_start_time']"}{$param['entry_start_time']}{/present}">
+				</div>
+				<div class="form-group">
+					<label class="control-label">-</label>
+					<input type="text" class="form-control date-picker" name="entry_end_time" placeholder="结束时间" data-date-format="yyyy-mm-dd" value="{present name="param['entry_end_time']"}{$param['entry_end_time']}{/present}"">
+				</div>
+			{/case}
+			{case value="leave_date"}
+				<div class="form-group">
+					<label class="control-label">离职时间*</label>
+					<input type="text" class="form-control date-picker" name="leave_start_time" placeholder="开始时间" data-date-format="yyyy-mm-dd" value="{present name="param['leave_start_time']"}{$param['leave_start_time']}{/present}">
+				</div>
+				<div class="form-group">
+					<label class="control-label">-</label>
+					<input type="text" class="form-control date-picker" name="leave_end_time" placeholder="结束时间" data-date-format="yyyy-mm-dd" value="{present name="param['leave_end_time']"}{$param['leave_end_time']}{/present}"">
+				</div>
+			{/case}
+			{case value="page"}
+				<input type="hidden" name="page" value="{$param['page']}">
 			{/case}
 		{/switch}
 	{/foreach}
