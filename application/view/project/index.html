@@ -29,8 +29,8 @@
 										<th>预算人数</th>
 										<th>部门预算</th>
 										<th>目前成本</th>
-										<th>创建时间</th>
-										<th>更新时间</th>
+										<!-- <th>创建时间</th>
+										<th>更新时间</th> -->
 										<th>操作</th>
 									</tr>
 								</thead>
@@ -51,8 +51,8 @@
 					  						<td>{$row['user_budget']}</td>
 					  						<td>{$row['budget']}</td>
 					  						<td>{$row['cur_budget']}</td>
-											<td>{$row['create_time']}</td>
-											<td>{$row['update_time']}</td>
+											<!-- <td>{$row['create_time']}</td>
+											<td>{$row['update_time']}</td> -->
 											<td>
 												<a class="btn btn-primary btn-xs" href="{:url('/project/edit', ['id'=>$row.id])}">编辑</a> |
 												<a class="btn btn-warning btn-xs" href="{:url('/project/budget', ['id'=>$row.id])}">目前成本</a> |

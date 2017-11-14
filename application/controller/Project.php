@@ -11,7 +11,7 @@ class Project extends Base
         $datas = [];
         foreach ($list as $row) {
         	$row['cur_budget'] = db('budget', [], false)->where(['project_id'=>$row['id']])->sum('budget');
-        	$row['user_count'] = db('user', [], false)->where(['project_id'=>$row['id'], 'type' => ['in', [1, 2], 'is_del' => 0]])->count('id');
+        	$row['user_count'] = db('user', [], false)->where(['project_id'=>$row['id'], 'type' => ['in', [1, 2]], 'is_del' => 0, 'status' => 1])->count('id');
         	$datas[] = $row;
         }
         return $this->fetch('index',['datas'=>$datas, 'plugin'=>$plugin]);
