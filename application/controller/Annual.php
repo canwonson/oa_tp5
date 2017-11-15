@@ -22,6 +22,7 @@ class Annual extends Base{
         ($param['start_time'] && $param['end_time']) && $where['entry_time'] = ['between', [strtotime($param['start_time']), strtotime($param['end_time'])+86400]];
         ($param['start_time'] && !$param['end_time']) && $where['entry_time'] = ['>=', strtotime($param['start_time'])];
         (!$param['start_time'] && $param['end_time']) && $where['entry_time'] = ['<=', strtotime($param['end_time'])+86400];
+        $where['is_del'] = 0;
         $where['type'] = ['in', [1, 2]];
     	$Annual = model('Annual');
     	$datas = model('user')->where(['status'=>1])->where($where)->field('id as user_id, name, project_id, duty_id, entry_time')->order('entry_time asc')->select();
