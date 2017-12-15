@@ -603,7 +603,13 @@ class Flow extends Base
 			$this->send_mail(2, $flow_id, $report_user);
 			$this->send_weixin(2, $flow_id, $flow_data['user_id']);
 			$this->send_weixin(2, $flow_id, $report_user);
-
+			//不同流程额外信息发送
+			foreach ($flow_conf["confirm_list"] as $confirm) {
+				if ($confirm['send'] == 1) {
+					$this->send_mail(2, $flow_id, $confirm['id']);
+					$this->send_weixin(2, $flow_id, $confirm['id']);
+				}
+			}
 		}else{
 			$user_id  = $flow_conf['confirm_list'][$step]['id'];
 			$step     = $step+1;
@@ -1095,12 +1101,14 @@ class Flow extends Base
 		}
 		$email = get_user_email($user_id);
 		$data = [
-			'title'       => $msg_title,
-			'content'     => $msg_contnet,
-			'address'     => $email,
-			'is_send'     => 0
+			'title'        => $msg_title,
+			'content'      => $msg_contnet,
+			'address'      => $email,
+			'is_send'      => 0,
+			'create_time'  => time(),
+			'update_time' => time(),
 		];
-		model('Email')->save($data);
+		model('Email')->insert($data);
 	}
 
 	public function send_weixin($type, $flow_id, $user_id = null, $content = ''){
@@ -1179,7 +1187,8 @@ class Flow extends Base
 			'is_send'     => 0,
 			'create_time' => time(),
 			'send_count'  => 0,
+			'update_time' => time(),
 			);
-		model('weixin')->save($data);
+		model('weixin')->insert($data);
 	}
 }

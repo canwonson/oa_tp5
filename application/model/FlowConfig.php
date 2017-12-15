@@ -240,7 +240,6 @@ class FlowConfig extends Common
         $position_id = isset($data['user_id']) ? get_position_id($data['user_id']) : get_position_id();
         $duty_id     = isset($data['user_id']) ? get_duty_id($data['user_id']) : get_duty_id();
         $project_id  = isset($data['user_id']) ? get_project_id($data['user_id']) : get_project_id();
-
         $User = db('user', [], false);
         $confirm = [];
         if ($audit[0] == 'po') {
@@ -283,7 +282,7 @@ class FlowConfig extends Common
             $user = $User->field('id,name')->where($where)->find();
             $confirm = $user;
         }
-
+        $confirm['send'] = (isset($audit[4]) && $audit[4]) ? 1 : 0;
         return $confirm;
     }
 
