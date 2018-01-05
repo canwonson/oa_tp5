@@ -1,0 +1,16 @@
+{php}
+	$value = '[name]';
+{/php}
+<div class="form-group">
+	<select class="form-control select2" name="[name]" id="select_users">
+	  	{foreach $users as $project_id => $duties}
+	  		<optgroup label="{$project_id|get_project_name}">
+	  			{foreach $duties as $duty}
+	  				{foreach $duty as $user}
+	  					<option value="{$user.id}" {eq name="$user.id" value="$data[$value]"}selected="selected"{/eq}>{$user.name}</option>
+	  				{/foreach}
+	  			{/foreach}
+			</optgroup>
+	  	{/foreach}
+	</select>
+</div>
