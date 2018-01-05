@@ -186,4 +186,42 @@ class Task extends Controller{
 		$params = json_encode($params, JSON_UNESCAPED_UNICODE);
 		return $params;
 	}
+
+	public function user()
+	{
+		if (date('H') !== '00' && (date('i') !== "00" || date('i') !== "01") && (date('j') !== "1")) {
+			exit();
+		}
+		$time = time();
+		//在职人数
+		$where['is_del'] = 0;
+		$where['type'] = ['in', [1, 2]];
+		$count = db('user')->where($where)->count();
+		//本月在职人数 = 上月在职人数
+		//本月
+		$map['year'] = date('Y', $time);
+		$map['month'] = date('n', $time);
+		$res = db('stat_user')->where($map)->count();
+		if ($res) {
+			db('stat_user')->where($map)->setField('start_day', $count);
+		}else{
+			$data = $map;
+			$data['start_day'] = $count;
+			db('stat_user')->insert($data);
+		}
+		unset($map);
+		unset($data);
+		//上月
+		$last_time = strtotime('-1 month', $time);
+		$map['year'] = date('Y', $last_time);
+		$map['month'] = date('n', $last_time);
+		$res = db('stat_user')->where($map)->count();
+		if ($res) {
+			db('stat_user')->where($map)->setField('end_day', $count);
+		}else{
+			$data = $map;
+			$data['end_day'] = $count;
+			db('stat_user')->insert($data);
+		}
+	}
 }

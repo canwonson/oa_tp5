@@ -69,7 +69,7 @@ class User extends Base
 
 	public function edit($id = null)
 	{
-		set_url('/user/index');
+		set_url('');
 		$plugin = ['date','select2', 'icheck', 'icheck_radio'];
 		$data=[
 			'name'         => '',

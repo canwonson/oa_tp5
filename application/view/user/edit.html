@@ -125,6 +125,9 @@
   <script>
 	function save() {
 		sendForm("form", "{:url('/user/save')}", 1);
+		setTimeout(function(){
+            window.close();
+        },1000);
 		return false;
 	}
 	function getAccount(name) {

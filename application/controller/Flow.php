@@ -141,7 +141,7 @@ class Flow extends Base
 	//流程走向配置页面
 	public function audit($id = null, $tid =null)
 	{
-		$plugin = ['select2'];
+		$plugin = ['select2', 'sweetalert'];
 		$FlowAudit = model('FlowAudit');
 		$FlowAuditConfig = model('FlowAuditConfig');
 		$data=[

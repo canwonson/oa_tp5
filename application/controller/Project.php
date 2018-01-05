@@ -26,6 +26,7 @@ class Project extends Base
 			'budget'      => 0,
 			'cur_budget'  => 0,
 			'budget_user' => 0,
+			'user_budget' => 0,
 			'status'      => 1,
 			'leader_id'   => '',
 		];

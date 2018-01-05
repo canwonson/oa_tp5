@@ -73,7 +73,12 @@
 									<i class="fa fa-check"></i>
 									保 存
 								</a>
+								{eq name="mode" value="edit"}
 								<a class="btn btn-warning btn-flat" href="{:url('/project/budget', ['id'=>$data.id])}">目前成本</a>
+								{/eq}
+								{eq name="mode" value="add"}
+								<a class="btn btn-warning btn-flat" href="{:url('/project/budget')}">目前成本</a>
+								{/eq}
 							</div>
 						</form>
 					</div>
