@@ -11,7 +11,7 @@ class Official extends Flow
 
 	public function getPlugin()
 	{
-		return ['date'];
+		return ['date', 'sweetalert'];
 	}
 
 	public function index()

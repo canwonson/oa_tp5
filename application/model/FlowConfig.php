@@ -83,10 +83,10 @@ class FlowConfig extends Common
             if (isset($audit_conf[$step-1])) {
                 switch ($audit_conf[$step-1][0]) {
                     case 'pr':
-                        $name = $name . "({$confirm_list[$step-1]['name']})";
+                        isset($confirm_list[$step-1]['name']) && $name = $name . "({$confirm_list[$step-1]['name']})";
                         break;
                     case 'po':
-                        $name = $name . "({$confirm_list[$step-1]['name']})";
+                        isset($confirm_list[$step-1]['name']) && $name = $name . "({$confirm_list[$step-1]['name']})";
                         break;
                     default:
                         # code...
@@ -95,6 +95,9 @@ class FlowConfig extends Common
             }
             if ($cur_step == $step) {
                 $name = "[{$name}]";
+            }
+            if ($name == '') {
+                $name = isset($confirm_list[$step-1]['name']) ? $confirm_list[$step-1]['name'] : '暂无';
             }
             $flow_show[$step] = $name;
         }
@@ -130,6 +133,49 @@ class FlowConfig extends Common
                     $info['show'] = $argument[2];
                     $comments[] = $info;
                 }
+            }
+            $comment_list[$step+1] = $comments;
+        }
+        return $comment_list;
+    }
+
+    public function getCommentContent($id)
+    {
+        $type         = model('Flow')->where(['id' => $id])->value('type');
+        $controller   = model('FlowConfig')->where(['id' => $type])->value('controller');
+        $data         = controller(ucfirst($controller))->data($id);
+        $comment_list = [];
+        $confs = $this->getFlow($type, $data, $id)['audit_conf'];
+        include(ROOT_PATH."info/confirm.php");
+        foreach ($confs as $step => $conf) {
+            $comments = [];
+            if (empty($conf[5])) {
+                $comments[] = '';
+            }else{
+                $argument = explode('-', $conf[5]);
+                $info['type'] = $argument[0];
+                $info['param'] = $argument[1];
+                $content = '';
+                isset($confirm_content[$info['type']][$info['param']]) && $content = $confirm_content[$info['type']][$info['param']];
+                $comments[] = $content;
+            }
+            $comment_list[$step+1] = $comments;
+        }
+        return $comment_list;
+    }
+
+    public function getConfirmTitle($id)
+    {
+        $type         = model('Flow')->where(['id' => $id])->value('type');
+        $controller   = model('FlowConfig')->where(['id' => $type])->value('controller');
+        $data         = controller(ucfirst($controller))->data($id);
+        $comment_list = [];
+        $confs = $this->getFlow($type, $data, $id)['audit_conf'];
+        foreach ($confs as $step => $conf) {
+            $comments = '';
+            if (empty($conf[6])) {
+            }else{
+                $comments = $conf[6];
             }
             $comment_list[$step+1] = $comments;
         }
@@ -259,7 +305,15 @@ class FlowConfig extends Common
         }
 
         if ($audit[0] == 'ur') {
-            $user_id = $audit[1];
+            $user_id = 0;
+            $param = explode('-', $audit[1]);
+            if (count($param) == 2) {
+                if ($param[0] == 'change' && isset($data[$param[1]])) {
+                    $user_id = $data[$param[1]];
+                }
+            }else{
+                $user_id = $audit[1];
+            }
             $where = [];
             $where['id'] = $user_id;
             $user = [];

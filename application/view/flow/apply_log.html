@@ -15,7 +15,8 @@
 				  		{present name="comment_conf[$row['step']]"}
 							{eq name="comment_conf[$row['step']][$num]['show']" value="1"}
 								<h4>{$comment_conf[$row['step']][$num]['comment']}:</h4>
-								<p>{$comment}</p>
+								<pre style="background-color:white;"><p>{$comment}</p>
+								</pre>
 								<hr/>
 							{/eq}
 				  		{/present}

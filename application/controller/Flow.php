@@ -509,7 +509,27 @@ class Flow extends Base
 			$users = model('user')->getUserList();
 			$this->assign('users', $users);
 		}
-        return $this->fetch('apply', ['data'=>$data, 'config'=>$config, 'mode'=>$mode, 'show'=>$show, 'confirm'=>$confirm, 'flow_log'=>$flow_log, 'confirm_list'=>$confirm_list, 'plugin'=>$plugin, 'urls'=>$urls, 'comment_conf'=>$comment_conf, 'is_file' => $is_file]);
+		//按钮显示
+		$button = [
+			'agree' => 1,
+			'reject' => 1,
+			'doubt' => 1,
+			'reconfirm' => 1,
+		];
+
+		$request = request();
+		$controller = $request->controller();
+		if ($controller == 'Handover') {
+			$button = [
+				'agree' => 1,
+				'reject' => 0,
+				'doubt' => 0,
+				'reconfirm' => 1,
+			];
+		}
+		//审核模板
+		$comment_content = $FlowConfig->getCommentContent($id);
+        return $this->fetch('apply', ['data'=>$data, 'config'=>$config, 'mode'=>$mode, 'show'=>$show, 'confirm'=>$confirm, 'flow_log'=>$flow_log, 'confirm_list'=>$confirm_list, 'plugin'=>$plugin, 'urls'=>$urls, 'comment_conf'=>$comment_conf, 'is_file' => $is_file, 'comment_content' => $comment_content, 'button' => $button]);
 	}
 
 	//获取审核日志方法
@@ -1017,6 +1037,7 @@ class Flow extends Base
         (!$param['start_time'] && $param['end_time']) && $where['create_time'] = ['<=', strtotime($param['end_time'])+86400];
 
 		$Flow  = model('Flow');
+		$where['is_del'] = 0;
 		$datas = $Flow->where($where)->order('create_time desc')->paginate(15);
 		$list = [];
 		foreach ($datas as $data) {
