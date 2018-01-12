@@ -1,0 +1,33 @@
+<div class="form-group">
+	<label class="control-label">入职日期</label>
+	<input type="text" class="form-control date-picker" name="entry_time" placeholder="入职日期" data-date-format="yyyy-mm-dd" value="{$data['entry_time']}" {notin name="mode" value="add,edit"}readonly{/notin}>
+</div>
+<div class="form-group">
+	<label class="control-label">交接日期</label>
+	<input type="text" class="form-control date-picker" name="over_time" placeholder="交接日期" data-date-format="yyyy-mm-dd" value="{$data['over_time']}" {notin name="mode" value="add,edit"}readonly{/notin}>
+</div>
+<div class="form-group">
+	<label class="control-label">接收人</label>
+	<div {notin name="mode" value="add,edit"}readonly{/notin}>
+		{include file="/index/select_user_single" name="receiver"/}
+	</div>
+</div>
+<div class="form-group">
+	<label class="control-label">所属部门交接内容(已提供模板,请根据模板进行填写)</label>
+	<textarea class="form-control" name="content" rows="15" {notin name="mode" value="add,edit"}readonly{/notin}>{notempty name="data['content']"}{$data['content']}{else/}
+1、请概括列出各项交接内容：
+
+2、电脑是否清理完毕（个人痕迹清除）：_______
+A、否　B、是
+
+3、电脑密码：
+
+4、近期工作：
+
+5、文档资料是否交接完毕（本部门图书、资料、文档、单据等）：_______
+A、否　B、是
+
+6、其他：
+
+{/notempty}</textarea>
+</div>
